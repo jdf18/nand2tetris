@@ -1,0 +1,36 @@
+[A_NEGATE]
+# set address to the top item in the stack
+@SP
+A=M-1
+# operation
+M = -M
+
+[A_NOT]
+# set address to the top item in the stack
+@SP
+A=M-1
+# operation
+M=!M
+
+[A_EQUALS label:unique]
+# Decrement the stack pointer
+@SP
+AM=M-1
+# save top item to D
+D=M
+# Decrement the stack pointer
+@SP
+AM=M-1
+# calculation
+D=M-D
+@SP
+A=M
+M=-1
+@{label}
+D; JEQ
+@SP
+A=M
+M=0
+# Increment the stack pointer
+({label})@SP
+M=M+1
