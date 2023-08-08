@@ -1,0 +1,14 @@
+function Main.main 1
+push constant 10
+call Random.setSeed 1
+pop temp 0
+call MineGame.new 0
+pop local 0
+push local 0
+call MineGame.run 1
+pop temp 0
+push local 0
+call MineGame.dispose 1
+pop temp 0
+push constant 0
+return

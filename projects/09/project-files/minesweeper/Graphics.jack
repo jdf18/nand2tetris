@@ -1,0 +1,270 @@
+class Graphics {
+    field Array gridLayout;
+    field Array unknownImage, flagImage, selectorImage, numImages;
+
+    constructor Graphics new(Array gl) {
+        var Array temp;
+        let gridLayout = gl;
+
+        let unknownImage = Array.new(16);
+        let unknownImage[2] = 2016;
+        let unknownImage[3] = 8184;
+        let unknownImage[4] = 8184;
+        let unknownImage[5] = 16380;
+        let unknownImage[6] = 16380;
+        let unknownImage[7] = 16380;
+        let unknownImage[8] = 16380;
+        let unknownImage[9] = 16380;
+        let unknownImage[10] = 16380;
+        let unknownImage[11] = 8184;
+        let unknownImage[12] = 8184;
+        let unknownImage[13] = 2016;
+
+        let flagImage = Array.new(16);
+        let flagImage[3] = 2016;
+        let flagImage[4] = 2016;
+        let flagImage[5] = 2016;
+        let flagImage[6] = 2016;
+        let flagImage[7] = 2016;
+        let flagImage[8] = 96;
+        let flagImage[9] = 96;
+        let flagImage[10] = 96;
+        let flagImage[11] = 96;
+        let flagImage[12] = 96;
+
+        let selectorImage = Array.new(16);
+        let selectorImage[0] = -4081;
+        let selectorImage[1] = -4081;
+        let selectorImage[2] = -16381;
+        let selectorImage[3] = -16381;
+        let selectorImage[12] = -16381;
+        let selectorImage[13] = -16381;
+        let selectorImage[14] = -4081;
+        let selectorImage[15] = -4081;
+
+        let numImages = Array.new(9);
+
+        let temp = Array.new(16);
+        let numImages[0] = temp;
+
+        let temp = Array.new(16);
+        let temp[3] = 768;
+        let temp[4] = 960;
+        let temp[5] = 960;
+        let temp[6] = 768;
+        let temp[7] = 768;
+        let temp[8] = 768;
+        let temp[9] = 768;
+        let temp[10] = 768;
+        let temp[11] = 1984;
+        let temp[12] = 1984;
+        let numImages[1] = temp;
+        
+        let temp = Array.new(16);
+        let temp[3] = 960;
+        let temp[4] = 2016;
+        let temp[5] = 1632;
+        let temp[6] = 1536;
+        let temp[7] = 1536;
+        let temp[8] = 1920;
+        let temp[9] = 960;
+        let temp[10] = 224;
+        let temp[11] = 2016;
+        let temp[12] = 2016;
+        let numImages[2] = temp;
+
+        let temp = Array.new(16);
+        let temp[3] = 960;
+        let temp[4] = 2016;
+        let temp[5] = 1632;
+        let temp[6] = 1536;
+        let temp[7] = 896;
+        let temp[8] = 896;
+        let temp[9] = 1536;
+        let temp[10] = 1632;
+        let temp[11] = 2016;
+        let temp[12] = 960;
+        let numImages[3] = temp;
+
+        let temp = Array.new(16);
+        let temp[3] = 96;
+        let temp[4] = 96;
+        let temp[5] = 864;
+        let temp[6] = 864;
+        let temp[7] = 2016;
+        let temp[8] = 2016;
+        let temp[9] = 768;
+        let temp[10] = 768;
+        let temp[11] = 768;
+        let temp[12] = 768;
+        let numImages[4] = temp;
+
+        let temp = Array.new(16);
+        let temp[3] = 2016;
+        let temp[4] = 2016;
+        let temp[5] = 96;
+        let temp[6] = 99;
+        let temp[7] = 2016;
+        let temp[8] = 1536;
+        let temp[9] = 1536;
+        let temp[10] = 1632;
+        let temp[11] = 2016;
+        let temp[12] = 960;
+        let numImages[5] = temp;
+
+        let temp = Array.new(16);
+        let temp[3] = 960;
+        let temp[4] = 992;
+        let temp[5] = 96;
+        let temp[6] = 96;
+        let temp[7] = 992;
+        let temp[8] = 2016;
+        let temp[9] = 1632;
+        let temp[10] = 1632;
+        let temp[11] = 2016;
+        let temp[12] = 960;
+        let numImages[6] = temp;
+
+        let temp = Array.new(16);
+        let temp[3] = 4064;
+        let temp[4] = 4064;
+        let temp[5] = 3072;
+        let temp[6] = 3072;
+        let temp[7] = 3584;
+        let temp[8] = 1536;
+        let temp[9] = 1536;
+        let temp[10] = 768;
+        let temp[11] = 768;
+        let temp[12] = 768;
+        let numImages[7] = temp;
+
+        return this;
+    }
+
+    method int getLocation(int x, int y) {
+        var int location;
+
+        var int xoffset, yoffset;
+
+        let xoffset = gridLayout[2];
+        let yoffset = gridLayout[3];
+        
+        let location = (y + yoffset) * 512 + x + xoffset+ 16384;
+        
+        return location;
+    }
+
+    method void drawUnknown(int x, int y) {
+        var int memAddress;
+
+        var int i;
+
+        let memAddress = getLocation(x, y);
+        
+        let i = 0;
+        while (i < 16) {
+            do Memory.poke(memAddress, unknownImage[i]);
+
+            let memAddress = memAddress + 32;
+            let i = i + 1;
+        }
+        return;
+    }
+
+    method void drawFlag(int x, int y) {
+        var int memAddress;
+        var int i;
+
+        let memAddress = getLocation(x, y);
+        
+        let i = 0;
+        while (i < 16) {
+            do Memory.poke(memAddress, flagImage[i]);
+
+            let memAddress = memAddress + 32;
+            let i = i + 1;
+        }
+        return;
+    }
+
+    method void drawNumber(int x, int y, int square) {
+        var int memAddress;
+        var int i;
+        var Array image;
+
+        let image = numImages[square];
+
+        let memAddress = getLocation(x, y);
+        
+        let i = 0;
+        while (i < 16) {
+            do Memory.poke(memAddress, image[i]);
+
+            let memAddress = memAddress + 32;
+            let i = i + 1;
+        }
+        return;
+    }
+
+    method void drawClear(int x, int y) {
+        var int memAddress;
+        var int i;
+
+        let memAddress = getLocation(x, y);
+        
+        let i = 0;
+        while (i < 16) {
+            do Memory.poke(memAddress, 0);
+
+            let memAddress = memAddress + 32;
+            let i = i + 1;
+        }
+        return;
+    }
+
+    method void toggleSelector(int x, int y) {
+        var int memAddress;
+        var int i, temp, row;
+
+        let memAddress = getLocation(x, y);
+        
+        let i = 0;
+        while (i < 16) {
+            let temp = Memory.peek(memAddress);
+            let row = selectorImage[i];
+            let temp = (temp | row) & (~(temp & row));
+            do Memory.poke(memAddress, temp);
+
+            let memAddress = memAddress + 32;
+            let i = i + 1;
+        }
+        return;
+    }
+
+    method void drawGrid(Grid visibleGrid) {
+        var int x, y;
+        var int square;
+
+        while (y < gridLayout[1]) {
+            let x = 0;
+            while (x < gridLayout[0]) {
+                let square = visibleGrid[y*gridLayout[1] + x];
+
+                if (square = 9) { // Unknown
+                    do drawUnknown(x, y);
+                } else {
+                    if (square = -1) { // Flag
+                        do drawFlag(x,y);
+                    } else {
+                        do drawNumber(x,y, square);
+                    }
+                }
+                
+
+                let x = x + 1;
+            }
+            let y = y + 1;
+        }
+        return;
+    }
+}

@@ -1,0 +1,195 @@
+class MineGame {
+    field Graphics graphics;
+    field boolean running;
+    field Array grid, visibleGrid;
+    field Array gridLayout;
+    field int selectedX, selectedY;
+
+    constructor MineGame new() {
+        var int i,j;
+        var Array row;
+
+        let running = false;
+
+        let gridLayout = Array.new(4);
+        let gridLayout[0] = 16; // rows
+        let gridLayout[1] = 12; // columns
+        let gridLayout[2] = 1; // x-offset
+        let gridLayout[3] = 1; // y-offset
+
+        let grid = Array.new(gridLayout[0] * gridLayout[1]);
+        let visibleGrid = Array.new(gridLayout[0] * gridLayout[1]);
+        let i = 0;
+        while (i < (gridLayout[0] * gridLayout[1])) {
+            let visibleGrid[i] = 9;
+            let i = i + 1;
+        }
+
+        let graphics = Graphics.new(gridLayout);
+
+        let selectedX = 0;
+        let selectedY = 0;
+
+        do generateMines(28);
+        do calculateNumbers();
+
+
+        let i = 0;
+        let grid[4] = -1;
+        while (i < gridLayout[1]) {
+            let j = 0;
+            while (j < gridLayout[0]) {
+                let j = j + 1;
+            }
+            let i = i + 1;
+        }
+        
+        return this;
+    }
+    method void dispose() {
+        do Memory.deAlloc(this);
+        return;
+    }
+
+    method void run() {
+        var char key;
+        let running = true;
+        do graphics.toggleSelector(0,0);
+
+        do graphics.drawGrid(visibleGrid);
+        
+
+        while (running) {
+            // Wait for key to be pressed
+            while (key = 0) {
+                let key = Keyboard.keyPressed();
+            }
+
+            do graphics.drawGrid(visibleGrid);
+            do parseKey(key);
+
+            // Wait for key to be released
+            while (~(key = 0)) {
+                let key = Keyboard.keyPressed();
+            }
+        }
+        return;
+    }
+
+    method void parseKey(char key) {
+        if (key = 81) { // Q
+            let running = false;
+        }
+        if (key = 131) { // UP
+            let selectedY = selectedY - 1;
+        }
+        if (key = 133) { // DOWN
+            let selectedY = selectedY + 1;
+        }
+        if (key = 130) { // LEFT
+            let selectedX = selectedX - 1;
+        }
+        if (key = 132) { // RIGHT
+            let selectedX = selectedX + 1;
+        }
+        if (key = 128) { // ENTER
+            do walk(selectedX, selectedY);
+        }
+        if (key = 32) { // SPACE
+            do flag(selectedX, selectedY);
+        }
+        do graphics.toggleSelector(selectedX, selectedY);
+        return;
+    }
+
+    method void walk(int x,int y) {
+        var int square;
+
+        let square = grid[y*gridLayout[1] + x];
+
+        if (square = -1) { // If Mine
+            do Output.printString("Game Over");
+        } else { // If number
+            let visibleGrid[y*gridLayout[1] + x] = square;
+            do Output.printInt(square);
+        }
+        return;
+    }
+
+    method void flag(int x, int y) {
+        if (visibleGrid[y*gridLayout[1] + x] = -1) {
+            let visibleGrid[y*gridLayout[1] + x] = 9;
+        }else {
+            let visibleGrid[y*gridLayout[1] + x] = -1;
+        }
+        return;
+    }
+
+    method void generateMines(int minecount) {
+        var int placedMines;
+        var int x, y;
+
+        let placedMines = 0;
+
+        while (placedMines < minecount) {
+            let x = Random.randRange(0, gridLayout[0]-1);
+            let y = Random.randRange(0, gridLayout[1]-1);
+            if (~(grid[y*gridLayout[1] + x] = -1)) {
+                let grid[y*gridLayout[1] + x] = -1;
+                let placedMines = placedMines + 1;
+            }
+        }
+        
+        return;
+    }
+
+    method void calculateNumbers() {
+        var int x, y;
+        var int C, T, TR, TL, B, BR, BL, L, R;
+        var int sum;
+
+        let R = isMine(0,0);
+        let BR = isMine(0,1);
+        // Others default to 0
+        let sum = R + BR;
+
+        while (y < gridLayout[1]) {
+            let x = 0;
+            
+            while (x < gridLayout[0]) {
+                let TL = isMine(x-1, y-1);
+                let L = isMine(x-1, y);
+                let BL = isMine(x-1, y+1);
+                let T = isMine(x, y-1);
+                let C = isMine(x, y);
+                let B = isMine(x, y+1);
+                let TR = isMine(x+1, y-1);
+                let R = isMine(x+1, y);
+                let BR = isMine(x+1, y+1);
+                let sum = TL + T + TR + L + R + BL + B + BR;
+                if (~(C = 1)) {
+                    //If not mine
+                    let grid[y*gridLayout[1] + x] = sum;
+                }
+                let x = x + 1;
+            }
+            let y = y + 1;
+        }
+
+        return;
+    }
+
+    method boolean isMine(int x, int y) { // Returns 1 if mine is at grid location, 0 otherwise
+        var int result;
+        if ((x < 0) | (y < 0) | (x > (gridLayout[0]-1)) | (y > (gridLayout[1]-1))) {
+            let result = 0;
+        } else{
+            if (grid[y*gridLayout[1] + x] = -1) {
+                let result = 1;
+            } else {
+                let result = 0;
+            }
+        }
+        return result;
+    }
+}
