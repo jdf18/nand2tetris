@@ -144,6 +144,8 @@ class CompilationEngine:
     
     def compileParameterList(self):
         # Check next token is a type
+        self.xml += "<parameterList>\n"
+
         if type(self.tokens.current_token) in [KeywordToken, IdentifierToken]:
             while True:
                 if type(self.tokens.current_token) == KeywordToken:
@@ -164,7 +166,43 @@ class CompilationEngine:
                 assert self.tokens.current_token.symbol == Symbols.COMMA
                 self.xml += "<symbol> , </symbol>\n"
                 self.tokens.advance()
+
+        self.xml += "</parameterList>\n"
         return
     
     def compileSubroutineBody(self):
+        self.xml += "<subroutineBody>\n"
+
+        # Check for {
+        assert type(self.tokens.current_token) == SymbolToken
+        assert self.tokens.current_token.symbol == Symbols.LEFT_CURLY_BRACKET
+        self.xml += "<symbol> { </symbol>\n"
+        self.tokens.advance()
+
+        # Check VarDec *
+        while True:
+            if type(self.tokens.current_token) == KeywordToken:
+                if self.tokens.current_token.keyword == Keywords.VAR:
+                    self.compileClassVarDec()
+                else:
+                    break
+            else:
+                break
+        
+        # Compile subroutine statements
+        self.compileStatements()
+
+        # Check for }
+        assert type(self.tokens.current_token) == SymbolToken
+        assert self.tokens.current_token.symbol == Symbols.RIGHT_CURLY_BRACKET
+        self.xml += "<symbol> } </symbol>\n"
+        self.tokens.advance()
+
+        self.xml += "</subroutineBody>\n"
+        return
+    
+    def compileVarDec(self):
+        return
+    
+    def compileStatements(self):
         return
