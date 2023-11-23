@@ -40,7 +40,7 @@ class CompilationEngine:
                 self.compileClassVarDec()
             else:
                 break
-
+        
         # Check for subroutine declarations *
         while True:
             if type(self.tokens.current_token) == SymbolToken:
@@ -55,9 +55,49 @@ class CompilationEngine:
 
             self.compileSubroutine()
         self.xml += "</class>\n"
+        self.tokens.advance()
         return self.xml
 
     def compileClassVarDec(self):
+        self.xml += "<classVarDec>\n"
+
+        # Check first token is STATIC | FIELD
+        assert type(self.tokens.current_token) == KeywordToken
+        assert self.tokens.current_token.keyword in [Keywords.STATIC, Keywords.FIELD]
+        self.xml += f"<keyword> {self.tokens.current_token.keyword.name.lower()} </keyword>\n"
+        self.tokens.advance()
+
+        # Next token is a type
+        assert type(self.tokens.current_token) in [KeywordToken, IdentifierToken]
+        if type(self.tokens.current_token) == KeywordToken:
+            assert self.tokens.current_token.keyword in [Keywords.INT, Keywords.CHAR, Keywords.BOOLEAN]
+            self.xml += f"<keyword> {self.tokens.current_token.keyword.name.lower()} </keyword>\n"
+        else: # type is identifier
+            self.xml += f"<identifier> {self.tokens.current_token.identifier} </identifier>\n"
+        self.tokens.advance()
+
+        # Check varName
+        assert type(self.tokens.current_token) == IdentifierToken
+        self.xml += f"<identifier> {self.tokens.current_token.identifier} </identifier>\n"
+        self.tokens.advance()
+
+        # Check ( ',' varName ) *
+        while True:
+            assert type(self.tokens.current_token) == SymbolToken
+            assert self.tokens.current_token.symbol in [Symbols.COMMA, Symbols.SEMICOLON]
+            if self.tokens.current_token.symbol == Symbols.COMMA:
+                self.xml += "<symbol> , </symbol>\n"
+                self.tokens.advance()
+
+                assert type(self.tokens.current_token) == IdentifierToken
+                self.xml += f"<identifier> {self.tokens.current_token.identifier} </identifier>\n"
+                self.tokens.advance()
+            else: # Symbol is ;
+                break
+
+        self.xml += "<symbol> ; </symbol>\n"
+        self.xml += "</classVarDec>\n"
+        self.tokens.advance()
         return
 
     def compileSubroutine(self):
