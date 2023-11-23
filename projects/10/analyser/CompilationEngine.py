@@ -143,6 +143,27 @@ class CompilationEngine:
         return
     
     def compileParameterList(self):
+        # Check next token is a type
+        if type(self.tokens.current_token) in [KeywordToken, IdentifierToken]:
+            while True:
+                if type(self.tokens.current_token) == KeywordToken:
+                    assert self.tokens.current_token.keyword in [Keywords.INT, Keywords.CHAR, Keywords.BOOLEAN]
+                    self.xml += f"<keyword> {self.tokens.current_token.keyword.name.lower()} </keyword>\n"
+                else: # type is identifier
+                    self.xml += f"<identifier> {self.tokens.current_token.identifier} </identifier>\n"
+                self.tokens.advance()
+
+                # Check varName
+                assert type(self.tokens.current_token) == IdentifierToken
+                self.xml += f"<identifier> {self.tokens.current_token.identifier} </identifier>\n"
+                self.tokens.advance()
+
+                assert type(self.tokens.current_token) == SymbolToken
+                if self.tokens.current_token.symbol != Symbols.COMMA:
+                    break
+                assert self.tokens.current_token.symbol == Symbols.COMMA
+                self.xml += "<symbol> , </symbol>\n"
+                self.tokens.advance()
         return
     
     def compileSubroutineBody(self):
