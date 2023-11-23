@@ -270,12 +270,57 @@ class CompilationEngine:
         return
     
     def compileLetStatement(self):
-        pass
+        self.xml += '<letStatement>\n'
+
+        # Check for LET keyword
+        assert type(self.tokens.current_token) == KeywordToken
+        assert self.tokens.current_token.keyword == Keywords.LET
+        self.xml += "<keyword> let </keyword>\n"
+        self.tokens.advance()
+
+        # Check varName
+        assert type(self.tokens.current_token) == IdentifierToken
+        self.xml += f"<identifier> {self.tokens.current_token.identifier} </identifier>\n"
+        self.tokens.advance()
+
+        # ( '[' expression ']' )?
+        assert type(self.tokens.current_token) == SymbolToken
+        if self.tokens.current_token.symbol == Symbols.LEFT_HARD_BRACKET:
+            self.xml += "<symbol> [ </symbol>\n"
+            self.tokens.advance()
+
+            self.compileExpression()
+
+            assert type(self.tokens.current_token) == SymbolToken
+            assert self.tokens.current_token.symbol == Symbols.RIGHT_HARD_BRACKET
+            self.xml += "<symbol> ] </symbol>\n"
+            self.tokens.advance()
+
+            assert type(self.tokens.current_token) == SymbolToken
+        assert self.tokens.current_token.symbol == Symbols.EQUALS
+        self.xml += "<symbol> = </symbol>\n"
+        self.tokens.advance()
+
+        self.compileExpression()
+
+        assert type(self.tokens.current_token) == SymbolToken
+        assert self.tokens.current_token.symbol == Symbols.SEMICOLON
+        self.xml += "<symbol> ; </symbol>\n"
+        self.tokens.advance()
+        return
+    
     def compileIfStatement(self):
-        pass
+        return
+    
     def compileWhileStatement(self):
-        pass
+        return
+    
     def compileDoStatement(self):
-        pass
+        return
+    
     def compileReturnStatement(self):
-        pass
+        return
+    
+    
+    def compileExpression(self):
+        return
