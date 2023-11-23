@@ -244,4 +244,38 @@ class CompilationEngine:
         return
     
     def compileStatements(self):
+        self.xml += "<statements>\n"
+
+        while True:
+            if type(self.tokens.current_token) == KeywordToken:
+                if self.tokens.current_token.keyword in [Keywords.LET, Keywords.IF, Keywords.WHILE, Keywords.DO, Keywords.RETURN]:
+                    if self.tokens.current_token.keyword == Keywords.LET:
+                        self.compileLetStatement()
+                    elif self.tokens.current_token.keyword == Keywords.IF:
+                        self.compileIfStatement()
+                    elif self.tokens.current_token.keyword == Keywords.WHILE:
+                        self.compileWhileStatement()
+                    elif self.tokens.current_token.keyword == Keywords.DO:
+                        self.compileDoStatement()
+                    elif self.tokens.current_token.keyword == Keywords.RETURN:
+                        self.compileReturnStatement()
+                    else:
+                        raise AssertionError()
+                else:
+                    break
+            else:
+                break
+
+        self.xml += "</statements>\n"
         return
+    
+    def compileLetStatement(self):
+        pass
+    def compileIfStatement(self):
+        pass
+    def compileWhileStatement(self):
+        pass
+    def compileDoStatement(self):
+        pass
+    def compileReturnStatement(self):
+        pass
