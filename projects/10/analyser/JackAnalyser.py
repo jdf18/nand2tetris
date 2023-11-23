@@ -8,10 +8,10 @@ def parse_file(filepath):
 	with open(filepath) as file:
 		contents = file.read()
 	tokeniser = JackTokeniser.Tokensiser(contents)
-	print(tokeniser.tokens)
-	compilation_engine = CompilationEngine.CompilationEngine(tokeniser)
+	compilation_engine = CompilationEngine.CompilationEngine(tokeniser.tokensList)
 	ast_root = compilation_engine.compileClass()
-	print(filter_output(ast_root.toXML()))
+	print(ast_root)
+	# print(filter_output(ast_root.toXML()))
 	
 
 
@@ -36,15 +36,15 @@ if __name__ == "__main__":
 
 	args = parser.parse_args()
 
-	filepath = args.filepath
+	filepath = os.path.realpath(args.filepath) + '\\'
 	is_directory = args.directory
 	
 	if not is_directory:
 		abstract_syntax_tree = parse_file(filepath)
 		save_AST(abstract_syntax_tree, filepath[filepath.rindex('.'):]+'.xml')
 	else:
-		for file in [f for f in os.listdir(filepath) if os.path.isfile(f)]:
-			if file[file.rindex('.'):] == '.jack':
-				abstract_syntax_tree = parse_file(file)
-				save_AST(abstract_syntax_tree, file[file.rindex('.'):]+'.xml')
+		for file in [f for f in os.listdir(filepath) if (os.path.isfile(filepath + f) and f[f.rindex('.'):] == '.jack')]:
+			print(file)
+			abstract_syntax_tree = parse_file(filepath + file)
+			save_AST(abstract_syntax_tree, (filepath + file)[(filepath + file).rindex('.'):]+'.xml')
 
