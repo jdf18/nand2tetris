@@ -101,4 +101,49 @@ class CompilationEngine:
         return
 
     def compileSubroutine(self):
+        self.xml += "<subroutineDec>\n"
+
+        # Check first symbol is CONSTRUCTOR | FUNCTION | METHOD
+        assert type(self.tokens.current_token) == KeywordToken
+        assert self.tokens.current_token.keyword in [Keywords.CONSTRUCTOR, Keywords.FUNCTION, Keywords.METHOD]
+        self.xml += f"<keyword> {self.tokens.current_token.keyword.name.lower()} </keyword>\n"
+        self.tokens.advance()
+        
+        # Next is a type thingy again or VOID
+        assert type(self.tokens.current_token) in [KeywordToken, IdentifierToken]
+        if type(self.tokens.current_token) == KeywordToken:
+            assert self.tokens.current_token.keyword in [Keywords.INT, Keywords.CHAR, Keywords.BOOLEAN, Keywords.VOID]
+            self.xml += f"<keyword> {self.tokens.current_token.keyword.name.lower()} </keyword>\n"
+        else: # type is identifier
+            self.xml += f"<identifier> {self.tokens.current_token.identifier} </identifier>\n"
+        self.tokens.advance()
+
+        # Check subroutineName
+        assert type(self.tokens.current_token) == IdentifierToken
+        self.xml += f"<identifier> {self.tokens.current_token.identifier} </identifier>\n"
+        self.tokens.advance()
+
+        # Check for (
+        assert type(self.tokens.current_token) == SymbolToken
+        assert self.tokens.current_token.symbol == Symbols.LEFT_BRACKET
+        self.xml += "<symbol> ( </symbol>\n"
+        self.tokens.advance()
+
+        self.compileParameterList()
+
+        # Check for )
+        assert type(self.tokens.current_token) == SymbolToken
+        assert self.tokens.current_token.symbol == Symbols.RIGHT_BRACKET
+        self.xml += "<symbol> ) </symbol>\n"
+        self.tokens.advance()
+
+        self.compileSubroutineBody()
+
+        self.xml += "</subroutineDec>\n"
+        return
+    
+    def compileParameterList(self):
+        return
+    
+    def compileSubroutineBody(self):
         return
