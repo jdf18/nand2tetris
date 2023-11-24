@@ -1,7 +1,8 @@
 from typing import List, Union
 from enum import Enum
 
-from JackTokeniser import Tokensiser, Keywords, Symbols, KeywordToken, SymbolToken, IdentifierToken, IntegerValueToken, StringValueToken
+from JackTokeniser import Tokensiser, Keywords, Symbols, SymbolsLUT, \
+    KeywordToken, SymbolToken, IdentifierToken, IntegerValueToken, StringValueToken
 
 class CompilationEngine:
     def __init__(self, tokensList: Tokensiser.SmartTokenList):
@@ -455,6 +456,25 @@ class CompilationEngine:
     
     
     def compileExpression(self):
+        self.xml += '<expression>\n'
+
+        self.compileTerm()
+
+        while True:
+            if type(self.tokens.current_token ) == SymbolToken:
+                if self.tokens.current_token.symbol in [Symbols.PLUS, Symbols.MINUS, Symbols.ASTERISK, Symbols.FORWARDS_SLASH, \
+                                                        Symbols.AMPERSAND, Symbols.PIPE, \
+                                                        Symbols.LESS_THAN, Symbols.GREATER_THAN, Symbols.EQUALS]:
+                    self.xml += f"<symbol> {SymbolsLUT[self.tokens.current_token.symbol]} </symbol>\n"
+                    self.tokens.advance()
+
+                    self.compileTerm()
+                else:
+                    break
+            else:
+                break
+
+        self.xml += '</expression>\n'
         return
     
     def compileTerm(self):

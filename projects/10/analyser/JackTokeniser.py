@@ -45,6 +45,28 @@ class Symbols(Enum):
     EQUALS = 18
     TILDA = 19
 
+SymbolsLUT = {
+    Symbols.LEFT_BRACKET: "(",
+    Symbols.RIGHT_BRACKET: ")",
+    Symbols.LEFT_HARD_BRACKET: "[",
+    Symbols.RIGHT_HARD_BRACKET: "]",
+    Symbols.LEFT_CURLY_BRACKET: "{",
+    Symbols.RIGHT_CURLY_BRACKET: "}",
+    Symbols.PERIOD: ".",
+    Symbols.COMMA: ",",
+    Symbols.SEMICOLON: ";",
+    Symbols.PLUS: "+", 
+    Symbols.MINUS: "-", 
+    Symbols.ASTERISK: "*", 
+    Symbols.FORWARDS_SLASH: "/", 
+    Symbols.AMPERSAND: "&", 
+    Symbols.PIPE: "|", 
+    Symbols.LESS_THAN: "<", 
+    Symbols.GREATER_THAN: ">", 
+    Symbols.EQUALS: "=", 
+    Symbols.TILDA: "~", 
+}
+
 class Token:
     def __repr__(self) -> str:
         return '<Token>'
