@@ -46,9 +46,8 @@ class CompilationEngine:
         while True:
             if type(self.tokens.current_token) == SymbolToken:
                 # Check for }
-                assert self.tokens.current_token == Symbols.RIGHT_CURLY_BRACKET
+                assert self.tokens.current_token.symbol == Symbols.RIGHT_CURLY_BRACKET
                 self.xml += "<symbol> } </symbol>\n"
-                self.tokens.advance()
                 break
 
             assert type(self.tokens.current_token) == KeywordToken
@@ -56,7 +55,12 @@ class CompilationEngine:
 
             self.compileSubroutine()
         self.xml += "</class>\n"
-        self.tokens.advance()
+        try:
+            self.tokens.advance()
+        except StopIteration:
+            print("Success")
+        else:
+            print("More tokens to parse, but ignored")
         return self.xml
 
     def compileClassVarDec(self):
@@ -99,7 +103,7 @@ class CompilationEngine:
         self.xml += "<symbol> ; </symbol>\n"
         self.xml += "</classVarDec>\n"
         self.tokens.advance()
-        return
+        return self.xml
 
     def compileSubroutine(self):
         self.xml += "<subroutineDec>\n"
@@ -442,6 +446,7 @@ class CompilationEngine:
         if type(self.tokens.current_token) == SymbolToken:
             if self.tokens.current_token.symbol == Symbols.SEMICOLON:
                 self.xml += '</returnStatement>\n'
+                self.tokens.advance()
                 return
             
         self.compileExpression()
@@ -606,4 +611,50 @@ class CompilationEngine:
         return
 
     def compileExpressionList(self):
+        self.xml += '<expressionList>\n'
+
+        while True:
+            if type(self.tokens.current_token) in [IntegerValueToken, StringValueToken, IdentifierToken]:
+                self.compileExpression()
+
+                if type(self.tokens.current_token) == SymbolToken:
+                    if self.tokens.current_token.symbol == Symbols.COMMA:
+                        self.xml += "<symbol> , </symbol>\n"
+                        self.tokens.advance()
+                    else:
+                        break
+                else:
+                    break
+            elif type(self.tokens.current_token) == KeywordToken:
+                if self.tokens.current_token.keyword in [Keywords.TRUE, Keywords.FALSE, Keywords.NULL, Keywords.THIS]:
+                    self.compileExpression()
+
+                    if type(self.tokens.current_token) == SymbolToken:
+                        if self.tokens.current_token.symbol == Symbols.COMMA:
+                            self.xml += "<symbol> , </symbol>\n"
+                            self.tokens.advance()
+                        else:
+                            break
+                    else:
+                        break
+                else:
+                    break
+            elif type(self.tokens.current_token) == SymbolToken:
+                if self.tokens.current_token.symbol in [Symbols.LEFT_BRACKET, Symbols.MINUS, Symbols.TILDA]:
+                    self.compileExpression()
+
+                    if type(self.tokens.current_token) == SymbolToken:
+                        if self.tokens.current_token.symbol == Symbols.COMMA:
+                            self.xml += "<symbol> , </symbol>\n"
+                            self.tokens.advance()
+                        else:
+                            break
+                    else:
+                        break
+                else:
+                    break
+            else:
+                break
+
+        self.xml += '</expressionList>\n'
         return

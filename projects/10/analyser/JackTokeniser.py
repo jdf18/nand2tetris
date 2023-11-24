@@ -224,7 +224,7 @@ class Tokensiser:
             self.current_index += n
             self.current_token: TOKENS_UNION = self.tokens[self.current_index]
             return self.current_token
-        def look_ahead(self, offset: int) -> TOKENS_UNION:
+        def look_ahead(self, offset: int=1) -> TOKENS_UNION:
             if self.current_index + offset >= len(self.tokens):
                 raise IndexError(f'IndexError: Look ahead with current index {self.current_index} and offset {offset}')
             return self.tokens[self.current_index + offset]
