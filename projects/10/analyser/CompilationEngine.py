@@ -307,9 +307,67 @@ class CompilationEngine:
         assert self.tokens.current_token.symbol == Symbols.SEMICOLON
         self.xml += "<symbol> ; </symbol>\n"
         self.tokens.advance()
+
+        self.xml += '</letStatement>\n'
         return
     
     def compileIfStatement(self):
+        self.xml += '<ifStatement>\n'
+
+        # Check for IF keyword
+        assert type(self.tokens.current_token) == KeywordToken
+        assert self.tokens.current_token.keyword == Keywords.IF
+        self.xml += "<keyword> if </keyword>\n"
+        self.tokens.advance()
+
+        # Check for (
+        assert type(self.tokens.current_token) == SymbolToken
+        assert self.tokens.current_token.symbol == Symbols.LEFT_BRACKET
+        self.xml += "<symbol> ( </symbol>\n"
+        self.tokens.advance()
+
+        self.compileExpression()
+
+        # Check for )
+        assert type(self.tokens.current_token) == SymbolToken
+        assert self.tokens.current_token.symbol == Symbols.RIGHT_BRACKET
+        self.xml += "<symbol> ) </symbol>\n"
+        self.tokens.advance()
+
+        # Check for {
+        assert type(self.tokens.current_token) == SymbolToken
+        assert self.tokens.current_token.symbol == Symbols.LEFT_CURLY_BRACKET
+        self.xml += "<symbol> { </symbol>\n"
+        self.tokens.advance()
+
+        self.compileStatements()
+
+        # Check for }
+        assert type(self.tokens.current_token) == SymbolToken
+        assert self.tokens.current_token.symbol == Symbols.RIGHT_CURLY_BRACKET
+        self.xml += "<symbol> } </symbol>\n"
+        self.tokens.advance()
+
+        if type(self.tokens.current_token) == KeywordToken:
+            if self.tokens.current_token.keyword == Keywords.ELSE:
+                self.xml += "<keyword> else </keyword>\n"
+                self.tokens.advance()
+
+                # Check for {
+                assert type(self.tokens.current_token) == SymbolToken
+                assert self.tokens.current_token.symbol == Symbols.LEFT_CURLY_BRACKET
+                self.xml += "<symbol> { </symbol>\n"
+                self.tokens.advance()
+
+                self.compileStatements()
+
+                # Check for }
+                assert type(self.tokens.current_token) == SymbolToken
+                assert self.tokens.current_token.symbol == Symbols.RIGHT_CURLY_BRACKET
+                self.xml += "<symbol> } </symbol>\n"
+                self.tokens.advance()
+        
+        self.xml += '</ifStatement>\n'
         return
     
     def compileWhileStatement(self):
