@@ -371,6 +371,43 @@ class CompilationEngine:
         return
     
     def compileWhileStatement(self):
+        self.xml += '<whileStatement>\n'
+
+        # Check for WHILE keyword
+        assert type(self.tokens.current_token) == KeywordToken
+        assert self.tokens.current_token.keyword == Keywords.WHILE
+        self.xml += "<keyword> while </keyword>\n"
+        self.tokens.advance()
+
+        # Check for (
+        assert type(self.tokens.current_token) == SymbolToken
+        assert self.tokens.current_token.symbol == Symbols.LEFT_BRACKET
+        self.xml += "<symbol> ( </symbol>\n"
+        self.tokens.advance()
+
+        self.compileExpression()
+
+        # Check for )
+        assert type(self.tokens.current_token) == SymbolToken
+        assert self.tokens.current_token.symbol == Symbols.RIGHT_BRACKET
+        self.xml += "<symbol> ) </symbol>\n"
+        self.tokens.advance()
+
+        # Check for {
+        assert type(self.tokens.current_token) == SymbolToken
+        assert self.tokens.current_token.symbol == Symbols.LEFT_CURLY_BRACKET
+        self.xml += "<symbol> { </symbol>\n"
+        self.tokens.advance()
+
+        self.compileStatements()
+
+        # Check for }
+        assert type(self.tokens.current_token) == SymbolToken
+        assert self.tokens.current_token.symbol == Symbols.RIGHT_CURLY_BRACKET
+        self.xml += "<symbol> } </symbol>\n"
+        self.tokens.advance()
+
+        self.xml += '</whileStatement>\n'
         return
     
     def compileDoStatement(self):
