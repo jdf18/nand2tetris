@@ -478,6 +478,84 @@ class CompilationEngine:
         return
     
     def compileTerm(self):
+        self.xml += '<term>\n'
+        
+        # their own class:          integerConstant | stringConstant | keywordConstant |
+        # start with identifier:    varName | varName '[' expression ']' | subroutineCall | 
+        # start with symbol:        '(' expression ')' | unaryOp term
+
+        if type(self.tokens.current_token) == IntegerValueToken:
+            self.xml += f"<integerConstant> {str(self.tokens.current_token.integerValue)} </integerConstant>\n"
+            self.tokens.advance()
+
+        elif type(self.tokens.current_token) == StringValueToken:
+            self.xml += f"<stringConstant> {str(self.tokens.current_token.stringValue)} </stringConstant>\n"
+            self.tokens.advance()
+
+        elif type(self.tokens.current_token) == KeywordToken:
+            assert self.tokens.current_token.keyword in [Keywords.TRUE, Keywords.FALSE, Keywords.NULL, Keywords.THIS]
+            self.xml += f"<keyword> {self.tokens.current_token.keyword.name.lower()} </keyword>\n"
+            self.tokens.advance()
+
+        elif type(self.tokens.current_token) == IdentifierToken:
+            # start with identifier:    varName | varName '[' expression ']' | subroutineCall
+            # varname:                      single identifier token
+            # varName '[' expression ']':   identifier then symbol '[' then ...
+            # subroutineCall:               identifier then symbol '(' then ...
+
+            if type(self.tokens.look_ahead()) == SymbolToken:
+                if self.tokens.look_ahead().symbol == Symbols.LEFT_HARD_BRACKET:
+                    # varName '[' expression ']':   identifier then symbol '[' then ...
+                    self.xml += f"<identifier> {self.tokens.current_token.identifier} </identifier>\n"
+                    self.tokens.advance()
+
+                    self.xml += "<symbol> [ </symbol>\n"
+                    self.tokens.advance()
+
+                    self.compileExpression()
+
+                    assert type(self.tokens.current_token) == SymbolToken
+                    assert self.tokens.current_token.symbol == Symbols.RIGHT_HARD_BRACKET
+                    self.xml += "<symbol> ] </symbol>\n"
+                    self.tokens.advance()
+
+                elif self.tokens.look_ahead().symbol == Symbols.LEFT_BRACKET:
+                    # subroutineCall:               identifier then symbol '(' then ...
+
+                    self.compileSubroutineCall()
+
+                else:
+                    # single identifier token
+                    self.xml += f"<identifier> {self.tokens.current_token.identifier} </identifier>\n"
+                    self.tokens.advance()
+            else:
+                # single identifier token
+                self.xml += f"<identifier> {self.tokens.current_token.identifier} </identifier>\n"
+                self.tokens.advance()
+        
+        elif type(self.tokens.current_token) == SymbolToken:
+            # start with symbol:        '(' expression ')' | unaryOp term
+            assert self.tokens.current_token.symbol in [Symbols.LEFT_BRACKET, Symbols.MINUS, Symbols.TILDA]
+
+            if self.tokens.current_token.symbol == Symbols.LEFT_BRACKET:
+                self.xml += "<symbol> ( </symbol>\n"
+                self.tokens.advance()
+
+                self.compileExpression()
+
+                assert type(self.tokens.current_token) == SymbolToken
+                assert self.tokens.current_token.symbol == Symbols.RIGHT_BRACKET
+                self.xml += "<symbol> ) </symbol>\n"
+                self.tokens.advance()
+            else:
+                assert self.tokens.current_token.symbol in [Symbols.MINUS, Symbols.TILDA]
+
+                self.xml += f"<symbol> {SymbolsLUT[self.tokens.current_token.symbol]} </symbol>\n"
+                self.tokens.advance()
+
+                self.compileTerm()
+
+        self.xml += '</term>\n'
         return
     
     def compileSubroutineCall(self):
