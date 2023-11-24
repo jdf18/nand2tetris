@@ -430,6 +430,27 @@ class CompilationEngine:
         return
     
     def compileReturnStatement(self):
+        self.xml += '<returnStatement>\n'
+
+        # Check for DO keyword
+        assert type(self.tokens.current_token) == KeywordToken
+        assert self.tokens.current_token.keyword == Keywords.RETURN
+        self.xml += "<keyword> return </keyword>\n"
+        self.tokens.advance()
+
+        if type(self.tokens.current_token) == SymbolToken:
+            if self.tokens.current_token.symbol == Symbols.SEMICOLON:
+                self.xml += '</returnStatement>\n'
+                return
+            
+        self.compileExpression()
+
+        assert type(self.tokens.current_token) == SymbolToken
+        assert self.tokens.current_token.symbol == Symbols.SEMICOLON
+        self.xml += "<symbol> ; </symbol>\n"
+        self.tokens.advance()
+
+        self.xml += '</returnStatement>\n'
         return
     
     
