@@ -411,6 +411,22 @@ class CompilationEngine:
         return
     
     def compileDoStatement(self):
+        self.xml += '<doStatement>\n'
+
+        # Check for DO keyword
+        assert type(self.tokens.current_token) == KeywordToken
+        assert self.tokens.current_token.keyword == Keywords.DO
+        self.xml += "<keyword> do </keyword>\n"
+        self.tokens.advance()
+
+        self.compileSubroutineCall()
+
+        assert type(self.tokens.current_token) == SymbolToken
+        assert self.tokens.current_token.symbol == Symbols.SEMICOLON
+        self.xml += "<symbol> ; </symbol>\n"
+        self.tokens.advance()
+
+        self.xml += '</doStatement>\n'
         return
     
     def compileReturnStatement(self):
@@ -419,3 +435,6 @@ class CompilationEngine:
     
     def compileExpression(self):
         return
+    
+    def compileSubroutineCall(self):
+        pass
