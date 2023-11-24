@@ -457,5 +457,11 @@ class CompilationEngine:
     def compileExpression(self):
         return
     
+    def compileTerm(self):
+        return
+    
     def compileSubroutineCall(self):
-        pass
+        return
+
+    def compileExpressionList(self):
+        return
