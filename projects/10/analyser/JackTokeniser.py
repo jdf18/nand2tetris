@@ -59,10 +59,10 @@ SymbolsLUT = {
     Symbols.MINUS: "-", 
     Symbols.ASTERISK: "*", 
     Symbols.FORWARDS_SLASH: "/", 
-    Symbols.AMPERSAND: "&", 
+    Symbols.AMPERSAND: "&amp;", 
     Symbols.PIPE: "|", 
-    Symbols.LESS_THAN: "<", 
-    Symbols.GREATER_THAN: ">", 
+    Symbols.LESS_THAN: "&lt;", 
+    Symbols.GREATER_THAN: "&gt;", 
     Symbols.EQUALS: "=", 
     Symbols.TILDA: "~", 
 }
@@ -108,21 +108,41 @@ class Tokensiser:
         self.tokensList = self.SmartTokenList(self.tokens)
     @staticmethod
     def filter_comments(input: str):
-        def filter_line(line:str):
-            if not line:
-                return ''
-            toggle_str = False
-            for i, char in enumerate(line):
-                if char == '"':
-                    toggle_str = not toggle_str
-                elif char == '/' and (not toggle_str):
-                    if i == 0:
-                        return ''
-                    return line[:i]
-                
-            return line
+        chars = ""
 
-        return '\n'.join(map(filter_line, input.split('\n')))
+        is_string = False
+        is_multi_line_comment = False
+        is_single_line_comment = False
+
+        previous_char = None
+
+        for char in input:
+            if is_string:
+                if char == '"':
+                    is_string = False
+                chars += char
+            elif is_single_line_comment:
+                if char == '\n':
+                    chars += '\n'
+                    is_single_line_comment = False
+            elif is_multi_line_comment:
+                if previous_char == '*' and char == '/':
+                    is_multi_line_comment = False
+            else:
+                if char == '/' and previous_char == '/':
+                    # single line comment, w/ remove last char from chars
+                    is_single_line_comment = True
+                    chars = chars[:-1]
+                elif char == '*' and previous_char == '/':
+                    # multi line comment, w/ remove last char from chars
+                    is_multi_line_comment = True
+                    chars = chars[:-1]
+                else:
+                    chars += char
+
+            previous_char = char
+
+        return chars
 
     def tokenise(self, input: str):
         is_string_value = False

@@ -308,7 +308,8 @@ class CompilationEngine:
 
         self.compileExpression()
 
-        print(self.tokens.tokens[self.tokens.current_index-3:self.tokens.current_index + 3])
+        #print(self.tokens.tokens[self.tokens.current_index-10:self.tokens.current_index + 10])
+        #print(self.tokens.current_index)
 
         assert type(self.tokens.current_token) == SymbolToken
         assert self.tokens.current_token.symbol == Symbols.SEMICOLON
@@ -492,8 +493,6 @@ class CompilationEngine:
         # start with identifier:    varName | varName '[' expression ']' | subroutineCall | 
         # start with symbol:        '(' expression ')' | unaryOp term
 
-        print(self.tokens.current_token)
-
         if type(self.tokens.current_token) == IntegerValueToken:
             self.xml += f"<integerConstant> {str(self.tokens.current_token.integerValue)} </integerConstant>\n"
             self.tokens.advance()
@@ -512,8 +511,6 @@ class CompilationEngine:
             # varname:                      single identifier token
             # varName '[' expression ']':   identifier then symbol '[' then ...
             # subroutineCall:               identifier then symbol '(' then ...
-
-            print(self.tokens.look_ahead())
 
             if type(self.tokens.look_ahead()) == SymbolToken:
                 if self.tokens.look_ahead().symbol == Symbols.LEFT_HARD_BRACKET:

@@ -48,5 +48,5 @@ if __name__ == "__main__":
 		for file in [f for f in os.listdir(filepath) if (os.path.isfile(filepath + f) and f[f.rindex('.'):] == '.jack')]:
 			print(file)
 			abstract_syntax_tree = parse_file(filepath + file)
-			save_AST(abstract_syntax_tree, filepath + file[:file.rindex('.')]+'.xmlg')
+			save_AST(abstract_syntax_tree, filepath + file[:file.rindex('.')]+'.xml')
 
