@@ -559,6 +559,50 @@ class CompilationEngine:
         return
     
     def compileSubroutineCall(self):
+        self.xml += '<subroutineCall>\n'
+
+        assert type(self.tokens.current_token) == IdentifierToken
+        self.xml += f"<identifier> {self.tokens.current_token.identifier} </identifier>\n"
+        self.tokens.advance()
+
+        # Check for ( or .
+        assert type(self.tokens.current_token) == SymbolToken
+        if self.tokens.current_token.symbol == Symbols.LEFT_BRACKET:
+            # Check for (
+            self.xml += "<symbol> ( </symbol>\n"
+            self.tokens.advance()
+
+            self.compileExpressionList()
+
+            # Check for )
+            assert type(self.tokens.current_token) == SymbolToken
+            assert self.tokens.current_token.symbol == Symbols.RIGHT_BRACKET
+            self.xml += "<symbol> ) </symbol>\n"
+            self.tokens.advance()
+        else:
+            assert self.tokens.current_token.symbol == Symbols.PERIOD
+            self.xml += "<symbol> ( </symbol>\n"
+            self.tokens.advance()
+
+            assert type(self.tokens.current_token) == IdentifierToken
+            self.xml += f"<identifier> {self.tokens.current_token.identifier} </identifier>\n"
+            self.tokens.advance()
+
+            # Check for (
+            assert type(self.tokens.current_token) == SymbolToken
+            assert self.tokens.current_token.symbol == Symbols.LEFT_BRACKET
+            self.xml += "<symbol> ( </symbol>\n"
+            self.tokens.advance()
+
+            self.compileExpressionList()
+
+            # Check for )
+            assert type(self.tokens.current_token) == SymbolToken
+            assert self.tokens.current_token.symbol == Symbols.RIGHT_BRACKET
+            self.xml += "<symbol> ) </symbol>\n"
+            self.tokens.advance()
+
+        self.xml += '</subroutineCall>\n'
         return
 
     def compileExpressionList(self):
