@@ -308,9 +308,6 @@ class CompilationEngine:
 
         self.compileExpression()
 
-        #print(self.tokens.tokens[self.tokens.current_index-10:self.tokens.current_index + 10])
-        #print(self.tokens.current_index)
-
         assert type(self.tokens.current_token) == SymbolToken
         assert self.tokens.current_token.symbol == Symbols.SEMICOLON
         self.xml += "<symbol> ; </symbol>\n"
