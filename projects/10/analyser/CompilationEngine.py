@@ -308,6 +308,8 @@ class CompilationEngine:
 
         self.compileExpression()
 
+        print(self.tokens.tokens[self.tokens.current_index-3:self.tokens.current_index + 3])
+
         assert type(self.tokens.current_token) == SymbolToken
         assert self.tokens.current_token.symbol == Symbols.SEMICOLON
         self.xml += "<symbol> ; </symbol>\n"
@@ -445,6 +447,7 @@ class CompilationEngine:
 
         if type(self.tokens.current_token) == SymbolToken:
             if self.tokens.current_token.symbol == Symbols.SEMICOLON:
+                self.xml += "<symbol> ; </symbol>\n"
                 self.xml += '</returnStatement>\n'
                 self.tokens.advance()
                 return
@@ -489,6 +492,8 @@ class CompilationEngine:
         # start with identifier:    varName | varName '[' expression ']' | subroutineCall | 
         # start with symbol:        '(' expression ')' | unaryOp term
 
+        print(self.tokens.current_token)
+
         if type(self.tokens.current_token) == IntegerValueToken:
             self.xml += f"<integerConstant> {str(self.tokens.current_token.integerValue)} </integerConstant>\n"
             self.tokens.advance()
@@ -508,6 +513,8 @@ class CompilationEngine:
             # varName '[' expression ']':   identifier then symbol '[' then ...
             # subroutineCall:               identifier then symbol '(' then ...
 
+            print(self.tokens.look_ahead())
+
             if type(self.tokens.look_ahead()) == SymbolToken:
                 if self.tokens.look_ahead().symbol == Symbols.LEFT_HARD_BRACKET:
                     # varName '[' expression ']':   identifier then symbol '[' then ...
@@ -524,7 +531,7 @@ class CompilationEngine:
                     self.xml += "<symbol> ] </symbol>\n"
                     self.tokens.advance()
 
-                elif self.tokens.look_ahead().symbol == Symbols.LEFT_BRACKET:
+                elif self.tokens.look_ahead().symbol in [Symbols.LEFT_BRACKET, Symbols.PERIOD]:
                     # subroutineCall:               identifier then symbol '(' then ...
 
                     self.compileSubroutineCall()
@@ -564,7 +571,7 @@ class CompilationEngine:
         return
     
     def compileSubroutineCall(self):
-        self.xml += '<subroutineCall>\n'
+        #self.xml += '<subroutineCall>\n'
 
         assert type(self.tokens.current_token) == IdentifierToken
         self.xml += f"<identifier> {self.tokens.current_token.identifier} </identifier>\n"
@@ -586,7 +593,7 @@ class CompilationEngine:
             self.tokens.advance()
         else:
             assert self.tokens.current_token.symbol == Symbols.PERIOD
-            self.xml += "<symbol> ( </symbol>\n"
+            self.xml += "<symbol> . </symbol>\n"
             self.tokens.advance()
 
             assert type(self.tokens.current_token) == IdentifierToken
@@ -607,7 +614,7 @@ class CompilationEngine:
             self.xml += "<symbol> ) </symbol>\n"
             self.tokens.advance()
 
-        self.xml += '</subroutineCall>\n'
+        #self.xml += '</subroutineCall>\n'
         return
 
     def compileExpressionList(self):
