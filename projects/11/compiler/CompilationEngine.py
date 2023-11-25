@@ -13,7 +13,7 @@ class CompilationEngine:
         self.tokens.advance()
         self.xml = ""
         self.symbol_table = SymbolTable()
-        self.vm_code = VMWriter()
+        self.vm_code = None
 
     def compileClass(self):
         self.xml += "<class>\n"
@@ -28,6 +28,7 @@ class CompilationEngine:
         assert type(self.tokens.current_token) == IdentifierToken, "Class name definition should include an identifier."
         self.xml += f"<identifier> {self.tokens.current_token.identifier} </identifier>\n"
         self.classname = self.tokens.current_token.identifier
+        self.vm_code = VMWriter(self.classname)
         self.tokens.advance()
 
         # Check for {
@@ -62,14 +63,13 @@ class CompilationEngine:
             self.compileSubroutine()
         self.xml += "</class>\n"
 
-        print(self.symbol_table)
         try:
             self.tokens.advance()
         except StopIteration:
             print("Success")
         else:
             print("More tokens to parse, but ignored")
-        return self.xml
+        return self.vm_code.vm_code
 
     def compileClassVarDec(self):
         self.xml += "<classVarDec>\n"
@@ -144,6 +144,7 @@ class CompilationEngine:
         # Check subroutineName
         assert type(self.tokens.current_token) == IdentifierToken
         self.xml += f"<identifier> {self.tokens.current_token.identifier} </identifier>\n"
+        self.subroutine_name = self.tokens.current_token.identifier
         self.tokens.advance()
 
         # Check for (
@@ -169,6 +170,8 @@ class CompilationEngine:
         # Check next token is a type
         self.xml += "<parameterList>\n"
 
+        locals_count = 0
+
         if type(self.tokens.current_token) in [KeywordToken, IdentifierToken]:
             while True:
                 if type(self.tokens.current_token) == KeywordToken:
@@ -184,6 +187,7 @@ class CompilationEngine:
                 assert type(self.tokens.current_token) == IdentifierToken
                 self.xml += f"<identifier> {self.tokens.current_token.identifier} </identifier>\n"
                 self.symbol_table.define(self.tokens.current_token.identifier, var_type, KIND.ARG)
+                locals_count += 1
                 self.tokens.advance()
 
                 assert type(self.tokens.current_token) == SymbolToken
@@ -194,6 +198,7 @@ class CompilationEngine:
                 self.tokens.advance()
 
         self.xml += "</parameterList>\n"
+        self.vm_code.write_function(self.subroutine_name, locals_count)
         return
     
     def compileSubroutineBody(self):
@@ -225,8 +230,6 @@ class CompilationEngine:
         self.tokens.advance()
 
         self.xml += "</subroutineBody>\n"
-
-        print(self.symbol_table)
         return
     
     def compileVarDec(self):
