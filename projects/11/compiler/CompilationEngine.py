@@ -317,6 +317,7 @@ class CompilationEngine:
         # Check varName
         assert type(self.tokens.current_token) == IdentifierToken
         self.xml += f"<identifier> {self.tokens.current_token.identifier} </identifier>\n"
+        store_token = self.tokens.current_token.identifier
         self.tokens.advance()
 
         # ( '[' expression ']' )?
@@ -342,6 +343,10 @@ class CompilationEngine:
         assert type(self.tokens.current_token) == SymbolToken
         assert self.tokens.current_token.symbol == Symbols.SEMICOLON
         self.xml += "<symbol> ; </symbol>\n"
+        self.vm_code.write_pop(
+            self.symbol_table.kind_of(store_token).value,
+            self.symbol_table.index_of(store_token)
+        )
         self.tokens.advance()
 
         self.xml += '</letStatement>\n'
@@ -363,6 +368,9 @@ class CompilationEngine:
         self.tokens.advance()
 
         self.compileExpression()
+
+        # TODO Conditional jump logic. Expression result should be on top of the stack
+        # Carry of executing if true, else, go to not marker
 
         # Check for )
         assert type(self.tokens.current_token) == SymbolToken
@@ -389,11 +397,15 @@ class CompilationEngine:
                 self.xml += "<keyword> else </keyword>\n"
                 self.tokens.advance()
 
+                # TODO If there is an else, before NOT marker, unconditional jump to end label
+
                 # Check for {
                 assert type(self.tokens.current_token) == SymbolToken
                 assert self.tokens.current_token.symbol == Symbols.LEFT_CURLY_BRACKET
                 self.xml += "<symbol> { </symbol>\n"
                 self.tokens.advance()
+
+                # TODO Label for NOT marker
 
                 self.compileStatements()
 
@@ -402,6 +414,8 @@ class CompilationEngine:
                 assert self.tokens.current_token.symbol == Symbols.RIGHT_CURLY_BRACKET
                 self.xml += "<symbol> } </symbol>\n"
                 self.tokens.advance()
+
+        # TODO END label (only present if there is an else), otherwise use the NOT marker
         
         self.xml += '</ifStatement>\n'
         return
@@ -415,6 +429,8 @@ class CompilationEngine:
         self.xml += "<keyword> while </keyword>\n"
         self.tokens.advance()
 
+        # TODO Place label here ?
+
         # Check for (
         assert type(self.tokens.current_token) == SymbolToken
         assert self.tokens.current_token.symbol == Symbols.LEFT_BRACKET
@@ -422,6 +438,8 @@ class CompilationEngine:
         self.tokens.advance()
 
         self.compileExpression()
+
+        # TODO Put the condition here. Result should already be on the top of the stack
 
         # Check for )
         assert type(self.tokens.current_token) == SymbolToken
@@ -442,6 +460,8 @@ class CompilationEngine:
         assert self.tokens.current_token.symbol == Symbols.RIGHT_CURLY_BRACKET
         self.xml += "<symbol> } </symbol>\n"
         self.tokens.advance()
+
+        # TODO Place exit label here ?
 
         self.xml += '</whileStatement>\n'
         return
@@ -553,10 +573,21 @@ class CompilationEngine:
         elif type(self.tokens.current_token) == KeywordToken:
             assert self.tokens.current_token.keyword in [Keywords.TRUE, Keywords.FALSE, Keywords.NULL, Keywords.THIS]
             self.xml += f"<keyword> {self.tokens.current_token.keyword.name.lower()} </keyword>\n"
+            if self.tokens.current_token.keyword == Keywords.TRUE:
+                self.vm_code.write_push(SEGMENT.CONST, 1)
+                self.vm_code.write_arithmetic(COMMAND.NEG)
+            elif self.tokens.current_token.keyword == Keywords.FALSE:
+                self.vm_code.write_push(SEGMENT.CONST, 0)
+            elif self.tokens.current_token.keyword == Keywords.NULL:
+                self.vm_code.write_push(SEGMENT.CONST, 0)
+            elif self.tokens.current_token.keyword == Keywords.THIS:
+                # TODO idk what to put here
+                # ? Pointer 0 ?
+                pass
             self.tokens.advance()
 
         elif type(self.tokens.current_token) == IdentifierToken:
-            # start with identifier:    varName | varName '[' expression ']' | subroutineCall
+            # * start with identifier:    varName | varName '[' expression ']' | subroutineCall
             # varname:                      single identifier token
             # varName '[' expression ']':   identifier then symbol '[' then ...
             # subroutineCall:               identifier then symbol '(' then ...
@@ -587,7 +618,7 @@ class CompilationEngine:
                     # single identifier token
                     self.xml += f"<identifier> {self.tokens.current_token.identifier} </identifier>\n"
                     self.vm_code.write_push(
-                        self.symbol_table.type_of(self.tokens.current_token.identifier),
+                        self.symbol_table.kind_of(self.tokens.current_token.identifier).value,
                         self.symbol_table.index_of(self.tokens.current_token.identifier)
                     )
                     self.tokens.advance()
