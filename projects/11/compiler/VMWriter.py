@@ -1,14 +1,14 @@
 from enum import Enum
 
 class SEGMENT(Enum):
-    CONST = 0
-    ARG = 1
-    LOCAL = 2
-    STATIC = 3 
-    THIS = 4
-    THAT = 5
-    POINTER = 6
-    TEMP = 7
+    CONST = "constant"
+    ARG = "argument"
+    LOCAL = "local"
+    STATIC = "static"
+    THIS = "this"
+    THAT = "that"
+    POINTER = "pointer"
+    TEMP = "temp"
 
 class COMMAND(Enum):
     ADD = 0
@@ -27,11 +27,11 @@ class VMWriter:
         self.classname = classname
     def write_push(self, segment: SEGMENT, index: int):
         # Writes a VM PUSH command
-        self.vm_code += f"    push {segment.name.lower()} {str(index)}\n"
+        self.vm_code += f"    push {segment.value.lower()} {str(index)}\n"
     def write_pop(self, segment: SEGMENT, index: int):
         # Writes a VM POP command
         assert segment != SEGMENT.CONST
-        self.vm_code += f"    pop {segment.name.lower()} {str(index)}\n"
+        self.vm_code += f"    pop {segment.value.lower()} {str(index)}\n"
     def write_arithmetic(self, command: COMMAND):
         # Writes a VM arithmetic-logical command
         self.vm_code += f"    {command.name.lower()}\n"

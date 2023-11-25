@@ -460,6 +460,8 @@ class CompilationEngine:
         assert type(self.tokens.current_token) == SymbolToken
         assert self.tokens.current_token.symbol == Symbols.SEMICOLON
         self.xml += "<symbol> ; </symbol>\n"
+        # throw item at the top of the stack from subroutine call as not saved anywhere
+        self.vm_code.write_pop(SEGMENT.TEMP, 0)
         self.tokens.advance()
 
         self.xml += '</doStatement>\n'
@@ -478,6 +480,8 @@ class CompilationEngine:
             if self.tokens.current_token.symbol == Symbols.SEMICOLON:
                 self.xml += "<symbol> ; </symbol>\n"
                 self.xml += '</returnStatement>\n'
+                # if not returning anything, push constant 0
+                self.vm_code.write_push(SEGMENT.CONST, 0)
                 self.tokens.advance()
                 return
             
@@ -486,6 +490,8 @@ class CompilationEngine:
         assert type(self.tokens.current_token) == SymbolToken
         assert self.tokens.current_token.symbol == Symbols.SEMICOLON
         self.xml += "<symbol> ; </symbol>\n"
+        # TODO Push this value onto the stack
+        # ? Does compileExpression already do this?
         self.tokens.advance()
 
         self.xml += '</returnStatement>\n'
@@ -496,6 +502,7 @@ class CompilationEngine:
         self.xml += '<expression>\n'
 
         self.compileTerm()
+        symbols = []
 
         while True:
             if type(self.tokens.current_token ) == SymbolToken:
@@ -503,6 +510,7 @@ class CompilationEngine:
                                                         Symbols.AMPERSAND, Symbols.PIPE, \
                                                         Symbols.LESS_THAN, Symbols.GREATER_THAN, Symbols.EQUALS]:
                     self.xml += f"<symbol> {SymbolsLUT[self.tokens.current_token.symbol]} </symbol>\n"
+                    symbols.append(self.tokens.current_token.symbol)
                     self.tokens.advance()
 
                     self.compileTerm()
@@ -510,6 +518,16 @@ class CompilationEngine:
                     break
             else:
                 break
+        
+        symbols.reverse()
+        for operation in symbols:
+            if operation == Symbols.ASTERISK:
+                # TODO Check these labels are correct, and also that it works in the first place.
+                self.vm_code.write_call("Math.multiply", 2)
+            elif operation == Symbols.FORWARDS_SLASH:
+                self.vm_code.write_call("Math.divide", 2)
+            else:
+                self.vm_code.write_arithmetic(operation.value)
 
         self.xml += '</expression>\n'
         return
@@ -523,10 +541,13 @@ class CompilationEngine:
 
         if type(self.tokens.current_token) == IntegerValueToken:
             self.xml += f"<integerConstant> {str(self.tokens.current_token.integerValue)} </integerConstant>\n"
+            self.vm_code.write_push(SEGMENT.CONST, self.tokens.current_token.integerValue)
             self.tokens.advance()
 
         elif type(self.tokens.current_token) == StringValueToken:
             self.xml += f"<stringConstant> {str(self.tokens.current_token.stringValue)} </stringConstant>\n"
+            # TODO Creates new string object with length
+            # TODO Adds each character
             self.tokens.advance()
 
         elif type(self.tokens.current_token) == KeywordToken:
@@ -554,6 +575,7 @@ class CompilationEngine:
                     assert type(self.tokens.current_token) == SymbolToken
                     assert self.tokens.current_token.symbol == Symbols.RIGHT_HARD_BRACKET
                     self.xml += "<symbol> ] </symbol>\n"
+                    # TODO push the result onto the stack
                     self.tokens.advance()
 
                 elif self.tokens.look_ahead().symbol in [Symbols.LEFT_BRACKET, Symbols.PERIOD]:
@@ -564,6 +586,10 @@ class CompilationEngine:
                 else:
                     # single identifier token
                     self.xml += f"<identifier> {self.tokens.current_token.identifier} </identifier>\n"
+                    self.vm_code.write_push(
+                        self.symbol_table.type_of(self.tokens.current_token.identifier),
+                        self.symbol_table.index_of(self.tokens.current_token.identifier)
+                    )
                     self.tokens.advance()
             else:
                 # single identifier token
@@ -590,6 +616,8 @@ class CompilationEngine:
                 self.xml += f"<symbol> {SymbolsLUT[self.tokens.current_token.symbol]} </symbol>\n"
                 self.tokens.advance()
 
+                # TODO Push token then do operation
+
                 self.compileTerm()
 
         self.xml += '</term>\n'
@@ -600,6 +628,7 @@ class CompilationEngine:
 
         assert type(self.tokens.current_token) == IdentifierToken
         self.xml += f"<identifier> {self.tokens.current_token.identifier} </identifier>\n"
+        label = self.tokens.current_token.identifier
         self.tokens.advance()
 
         # Check for ( or .
@@ -623,6 +652,7 @@ class CompilationEngine:
 
             assert type(self.tokens.current_token) == IdentifierToken
             self.xml += f"<identifier> {self.tokens.current_token.identifier} </identifier>\n"
+            label += '.' + self.tokens.current_token.identifier
             self.tokens.advance()
 
             # Check for (
@@ -631,7 +661,7 @@ class CompilationEngine:
             self.xml += "<symbol> ( </symbol>\n"
             self.tokens.advance()
 
-            self.compileExpressionList()
+            n_args = self.compileExpressionList()
 
             # Check for )
             assert type(self.tokens.current_token) == SymbolToken
@@ -639,15 +669,19 @@ class CompilationEngine:
             self.xml += "<symbol> ) </symbol>\n"
             self.tokens.advance()
 
+        self.vm_code.write_call(label, n_args)
+
         #self.xml += '</subroutineCall>\n'
         return
 
-    def compileExpressionList(self):
+    def compileExpressionList(self) -> int:
         self.xml += '<expressionList>\n'
+        count = 0
 
         while True:
             if type(self.tokens.current_token) in [IntegerValueToken, StringValueToken, IdentifierToken]:
                 self.compileExpression()
+                count += 1
 
                 if type(self.tokens.current_token) == SymbolToken:
                     if self.tokens.current_token.symbol == Symbols.COMMA:
@@ -660,6 +694,7 @@ class CompilationEngine:
             elif type(self.tokens.current_token) == KeywordToken:
                 if self.tokens.current_token.keyword in [Keywords.TRUE, Keywords.FALSE, Keywords.NULL, Keywords.THIS]:
                     self.compileExpression()
+                    count += 1
 
                     if type(self.tokens.current_token) == SymbolToken:
                         if self.tokens.current_token.symbol == Symbols.COMMA:
@@ -674,6 +709,7 @@ class CompilationEngine:
             elif type(self.tokens.current_token) == SymbolToken:
                 if self.tokens.current_token.symbol in [Symbols.LEFT_BRACKET, Symbols.MINUS, Symbols.TILDA]:
                     self.compileExpression()
+                    count += 1
 
                     if type(self.tokens.current_token) == SymbolToken:
                         if self.tokens.current_token.symbol == Symbols.COMMA:
@@ -689,4 +725,5 @@ class CompilationEngine:
                 break
 
         self.xml += '</expressionList>\n'
-        return
+        # return number of arguments
+        return count

@@ -1,11 +1,12 @@
 from enum import Enum
 from typing import Dict, Tuple
+from VMWriter import SEGMENT
 
 class KIND(Enum):
-    STATIC = 0
-    FIELD = 1
-    ARG = 2
-    VAR = 3
+    STATIC = SEGMENT.STATIC
+    FIELD = SEGMENT.THIS
+    ARG = SEGMENT.ARG
+    VAR = SEGMENT.LOCAL
 
 class SymbolTable:
     def __init__(self):

@@ -1,5 +1,6 @@
 from enum import Enum
 from typing import List, Tuple, Union, Any
+from VMWriter import COMMAND
 
 class Keywords(Enum):
     CLASS = 0
@@ -34,16 +35,16 @@ class Symbols(Enum):
     PERIOD = 7
     COMMA = 8
     SEMICOLON = 9
-    PLUS = 10
-    MINUS = 11
+    PLUS = COMMAND.ADD
+    MINUS = COMMAND.NEG
     ASTERISK = 12
     FORWARDS_SLASH = 13
-    AMPERSAND = 14
-    PIPE = 15
-    LESS_THAN = 16
-    GREATER_THAN = 17
-    EQUALS = 18
-    TILDA = 19
+    AMPERSAND = COMMAND.AND
+    PIPE = COMMAND.OR
+    LESS_THAN = COMMAND.LT
+    GREATER_THAN = COMMAND.GT
+    EQUALS = COMMAND.EQ
+    TILDA = COMMAND.NOT
 
 SymbolsLUT = {
     Symbols.LEFT_BRACKET: "(",
