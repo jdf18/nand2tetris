@@ -4,11 +4,16 @@ from enum import Enum
 from JackTokeniser import Tokensiser, Keywords, Symbols, SymbolsLUT, \
     KeywordToken, SymbolToken, IdentifierToken, IntegerValueToken, StringValueToken
 
+from VMWriter import VMWriter, SEGMENT, COMMAND
+from SymbolTable import SymbolTable
+
 class CompilationEngine:
     def __init__(self, tokensList: Tokensiser.SmartTokenList):
         self.tokens = tokensList
         self.tokens.advance()
         self.xml = ""
+        self.symbol_table = SymbolTable()
+        self.vm_code = VMWriter()
 
     def compileClass(self):
         self.xml += "<class>\n"
