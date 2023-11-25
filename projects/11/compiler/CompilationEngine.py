@@ -14,6 +14,13 @@ class CompilationEngine:
         self.xml = ""
         self.symbol_table = SymbolTable()
         self.vm_code = None
+        self.classname = "A"
+        self.label_count = 0
+
+    def get_new_label(self):
+        label = self.classname + str(self.label_count)
+        self.label_count += 1
+        return label
 
     def compileClass(self):
         self.xml += "<class>\n"
@@ -198,7 +205,7 @@ class CompilationEngine:
                 self.tokens.advance()
 
         self.xml += "</parameterList>\n"
-        self.vm_code.write_function(self.subroutine_name, locals_count)
+        
         return
     
     def compileSubroutineBody(self):
@@ -210,15 +217,18 @@ class CompilationEngine:
         self.xml += "<symbol> { </symbol>\n"
         self.tokens.advance()
 
+        locals_count = 0
         # Check VarDec *
         while True:
             if type(self.tokens.current_token) == KeywordToken:
                 if self.tokens.current_token.keyword == Keywords.VAR:
-                    self.compileVarDec()
+                    locals_count += self.compileVarDec()
                 else:
                     break
             else:
                 break
+
+        self.vm_code.write_function(self.subroutine_name, locals_count)
         
         # Compile subroutine statements
         self.compileStatements()
@@ -234,6 +244,8 @@ class CompilationEngine:
     
     def compileVarDec(self):
         self.xml += "<varDec>\n"
+
+        locals_count = 0
         
         # VAR Keyword
         assert type(self.tokens.current_token) == KeywordToken
@@ -257,6 +269,7 @@ class CompilationEngine:
         assert type(self.tokens.current_token) == IdentifierToken
         self.xml += f"<identifier> {self.tokens.current_token.identifier} </identifier>\n"
         self.symbol_table.define(self.tokens.current_token.identifier, var_type, var_kind)
+        locals_count += 1
         self.tokens.advance()
 
         # Check ( ',' varName ) *
@@ -270,14 +283,16 @@ class CompilationEngine:
                 assert type(self.tokens.current_token) == IdentifierToken
                 self.xml += f"<identifier> {self.tokens.current_token.identifier} </identifier>\n"
                 self.symbol_table.define(self.tokens.current_token.identifier, var_type, var_kind)
+                locals_count += 1
                 self.tokens.advance()
             else: # Symbol is ;
                 break
 
         self.xml += "<symbol> ; </symbol>\n"
+        
         self.tokens.advance()
         self.xml += "</varDec>\n"
-        return
+        return locals_count
     
     def compileStatements(self):
         self.xml += "<statements>\n"
@@ -355,6 +370,8 @@ class CompilationEngine:
     def compileIfStatement(self):
         self.xml += '<ifStatement>\n'
 
+        has_else = False
+
         # Check for IF keyword
         assert type(self.tokens.current_token) == KeywordToken
         assert self.tokens.current_token.keyword == Keywords.IF
@@ -367,9 +384,16 @@ class CompilationEngine:
         self.xml += "<symbol> ( </symbol>\n"
         self.tokens.advance()
 
+        top_label = self.get_new_label()
+        neg_label = self.get_new_label()
+
+        self.vm_code.write_label(top_label)
+
         self.compileExpression()
 
-        # TODO Conditional jump logic. Expression result should be on top of the stack
+        # Conditional jump logic. Expression result should be on top of the stack
+        self.vm_code.write_arithmetic(COMMAND.NOT)
+        self.vm_code.write_if(neg_label)
         # Carry of executing if true, else, go to not marker
 
         # Check for )
@@ -394,10 +418,14 @@ class CompilationEngine:
 
         if type(self.tokens.current_token) == KeywordToken:
             if self.tokens.current_token.keyword == Keywords.ELSE:
+                has_else = True
+                end_label = self.get_new_label()
+
                 self.xml += "<keyword> else </keyword>\n"
                 self.tokens.advance()
 
-                # TODO If there is an else, before NOT marker, unconditional jump to end label
+                # If there is an else, before NOT marker, unconditional jump to end label
+                self.vm_code.write_goto(end_label)
 
                 # Check for {
                 assert type(self.tokens.current_token) == SymbolToken
@@ -405,7 +433,8 @@ class CompilationEngine:
                 self.xml += "<symbol> { </symbol>\n"
                 self.tokens.advance()
 
-                # TODO Label for NOT marker
+                # Label for NOT marker
+                self.vm_code.write_label(neg_label)
 
                 self.compileStatements()
 
@@ -415,8 +444,8 @@ class CompilationEngine:
                 self.xml += "<symbol> } </symbol>\n"
                 self.tokens.advance()
 
-        # TODO END label (only present if there is an else), otherwise use the NOT marker
-        
+        # END label (only present if there is an else), otherwise use the NOT marker
+        self.vm_code.write_label( (end_label if has_else else neg_label) )
         self.xml += '</ifStatement>\n'
         return
     
@@ -429,7 +458,11 @@ class CompilationEngine:
         self.xml += "<keyword> while </keyword>\n"
         self.tokens.advance()
 
-        # TODO Place label here ?
+        # Place label here ?
+        top_label = self.get_new_label()
+        exit_label = self.get_new_label()
+
+        self.vm_code.write_label(top_label)
 
         # Check for (
         assert type(self.tokens.current_token) == SymbolToken
@@ -439,7 +472,10 @@ class CompilationEngine:
 
         self.compileExpression()
 
-        # TODO Put the condition here. Result should already be on the top of the stack
+        # Put the condition here. Result should already be on the top of the stack
+        self.vm_code.write_arithmetic(COMMAND.NOT)
+        self.vm_code.write_if(exit_label)
+        # ? Because NOT(GT) == LT OR EQ does this change the bounds ?
 
         # Check for )
         assert type(self.tokens.current_token) == SymbolToken
@@ -461,7 +497,11 @@ class CompilationEngine:
         self.xml += "<symbol> } </symbol>\n"
         self.tokens.advance()
 
-        # TODO Place exit label here ?
+        # Jump to top
+        self.vm_code.write_goto(top_label)
+
+        # Place exit label here ?
+        self.vm_code.write_label(exit_label)
 
         self.xml += '</whileStatement>\n'
         return
@@ -503,6 +543,7 @@ class CompilationEngine:
                 # if not returning anything, push constant 0
                 self.vm_code.write_push(SEGMENT.CONST, 0)
                 self.tokens.advance()
+                self.vm_code.write_return()
                 return
             
         self.compileExpression()
@@ -513,6 +554,7 @@ class CompilationEngine:
         # TODO Push this value onto the stack
         # ? Does compileExpression already do this?
         self.tokens.advance()
+        self.vm_code.write_return()
 
         self.xml += '</returnStatement>\n'
         return
@@ -546,6 +588,9 @@ class CompilationEngine:
                 self.vm_code.write_call("Math.multiply", 2)
             elif operation == Symbols.FORWARDS_SLASH:
                 self.vm_code.write_call("Math.divide", 2)
+            elif operation == Symbols.MINUS:
+                self.vm_code.write_arithmetic(COMMAND.NEG)
+                self.vm_code.write_arithmetic(COMMAND.ADD)
             else:
                 self.vm_code.write_arithmetic(operation.value)
 
