@@ -5,7 +5,7 @@ from JackTokeniser import Tokensiser, Keywords, Symbols, SymbolsLUT, \
     KeywordToken, SymbolToken, IdentifierToken, IntegerValueToken, StringValueToken
 
 from VMWriter import VMWriter, SEGMENT, COMMAND
-from SymbolTable import SymbolTable
+from SymbolTable import SymbolTable, KIND
 
 class CompilationEngine:
     def __init__(self, tokensList: Tokensiser.SmartTokenList):
@@ -27,6 +27,7 @@ class CompilationEngine:
         # Check for the classname identifier
         assert type(self.tokens.current_token) == IdentifierToken, "Class name definition should include an identifier."
         self.xml += f"<identifier> {self.tokens.current_token.identifier} </identifier>\n"
+        self.classname = self.tokens.current_token.identifier
         self.tokens.advance()
 
         # Check for {
@@ -60,6 +61,8 @@ class CompilationEngine:
 
             self.compileSubroutine()
         self.xml += "</class>\n"
+
+        print(self.symbol_table)
         try:
             self.tokens.advance()
         except StopIteration:
@@ -75,6 +78,7 @@ class CompilationEngine:
         assert type(self.tokens.current_token) == KeywordToken
         assert self.tokens.current_token.keyword in [Keywords.STATIC, Keywords.FIELD]
         self.xml += f"<keyword> {self.tokens.current_token.keyword.name.lower()} </keyword>\n"
+        var_kind = (KIND.STATIC if self.tokens.current_token.keyword == Keywords.STATIC else KIND.FIELD)
         self.tokens.advance()
 
         # Next token is a type
@@ -82,13 +86,16 @@ class CompilationEngine:
         if type(self.tokens.current_token) == KeywordToken:
             assert self.tokens.current_token.keyword in [Keywords.INT, Keywords.CHAR, Keywords.BOOLEAN]
             self.xml += f"<keyword> {self.tokens.current_token.keyword.name.lower()} </keyword>\n"
+            var_type = self.tokens.current_token.keyword.name.lower()
         else: # type is identifier
             self.xml += f"<identifier> {self.tokens.current_token.identifier} </identifier>\n"
+            var_type = self.tokens.current_token.identifier
         self.tokens.advance()
 
         # Check varName
         assert type(self.tokens.current_token) == IdentifierToken
         self.xml += f"<identifier> {self.tokens.current_token.identifier} </identifier>\n"
+        self.symbol_table.define(self.tokens.current_token.identifier, var_type, var_kind)
         self.tokens.advance()
 
         # Check ( ',' varName ) *
@@ -101,22 +108,28 @@ class CompilationEngine:
 
                 assert type(self.tokens.current_token) == IdentifierToken
                 self.xml += f"<identifier> {self.tokens.current_token.identifier} </identifier>\n"
+                self.symbol_table.define(self.tokens.current_token.identifier, var_type, var_kind)
                 self.tokens.advance()
             else: # Symbol is ;
                 break
 
         self.xml += "<symbol> ; </symbol>\n"
         self.xml += "</classVarDec>\n"
+        
         self.tokens.advance()
-        return self.xml
+        return
 
     def compileSubroutine(self):
         self.xml += "<subroutineDec>\n"
+
+        self.symbol_table.startSubroutine()
 
         # Check first symbol is CONSTRUCTOR | FUNCTION | METHOD
         assert type(self.tokens.current_token) == KeywordToken
         assert self.tokens.current_token.keyword in [Keywords.CONSTRUCTOR, Keywords.FUNCTION, Keywords.METHOD]
         self.xml += f"<keyword> {self.tokens.current_token.keyword.name.lower()} </keyword>\n"
+        if self.tokens.current_token.keyword == Keywords.METHOD:
+            self.symbol_table.define('this', self.classname, KIND.ARG)
         self.tokens.advance()
         
         # Next is a type thingy again or VOID
@@ -161,13 +174,16 @@ class CompilationEngine:
                 if type(self.tokens.current_token) == KeywordToken:
                     assert self.tokens.current_token.keyword in [Keywords.INT, Keywords.CHAR, Keywords.BOOLEAN]
                     self.xml += f"<keyword> {self.tokens.current_token.keyword.name.lower()} </keyword>\n"
+                    var_type = self.tokens.current_token.keyword.name.lower()
                 else: # type is identifier
                     self.xml += f"<identifier> {self.tokens.current_token.identifier} </identifier>\n"
+                    var_type = self.tokens.current_token.identifier
                 self.tokens.advance()
 
                 # Check varName
                 assert type(self.tokens.current_token) == IdentifierToken
                 self.xml += f"<identifier> {self.tokens.current_token.identifier} </identifier>\n"
+                self.symbol_table.define(self.tokens.current_token.identifier, var_type, KIND.ARG)
                 self.tokens.advance()
 
                 assert type(self.tokens.current_token) == SymbolToken
@@ -209,6 +225,8 @@ class CompilationEngine:
         self.tokens.advance()
 
         self.xml += "</subroutineBody>\n"
+
+        print(self.symbol_table)
         return
     
     def compileVarDec(self):
@@ -218,6 +236,7 @@ class CompilationEngine:
         assert type(self.tokens.current_token) == KeywordToken
         assert self.tokens.current_token.keyword == Keywords.VAR
         self.xml += "<keyword> var </keyword>\n"
+        var_kind = KIND.VAR
         self.tokens.advance()
 
         # Next token is a type
@@ -225,13 +244,16 @@ class CompilationEngine:
         if type(self.tokens.current_token) == KeywordToken:
             assert self.tokens.current_token.keyword in [Keywords.INT, Keywords.CHAR, Keywords.BOOLEAN]
             self.xml += f"<keyword> {self.tokens.current_token.keyword.name.lower()} </keyword>\n"
+            var_type = self.tokens.current_token.keyword.name.lower()
         else: # type is identifier
             self.xml += f"<identifier> {self.tokens.current_token.identifier} </identifier>\n"
+            var_type = self.tokens.current_token.identifier
         self.tokens.advance()
 
         # Check varName
         assert type(self.tokens.current_token) == IdentifierToken
         self.xml += f"<identifier> {self.tokens.current_token.identifier} </identifier>\n"
+        self.symbol_table.define(self.tokens.current_token.identifier, var_type, var_kind)
         self.tokens.advance()
 
         # Check ( ',' varName ) *
@@ -244,6 +266,7 @@ class CompilationEngine:
 
                 assert type(self.tokens.current_token) == IdentifierToken
                 self.xml += f"<identifier> {self.tokens.current_token.identifier} </identifier>\n"
+                self.symbol_table.define(self.tokens.current_token.identifier, var_type, var_kind)
                 self.tokens.advance()
             else: # Symbol is ;
                 break

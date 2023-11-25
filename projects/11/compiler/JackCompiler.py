@@ -11,8 +11,8 @@ def compile_file(filepath):
 
 def save_VMCode(mv_code, filepath):
 	print(filepath)
-	with open(filepath, 'w') as file:
-		file.write(mv_code)
+	#with open(filepath, 'w') as file:
+#		file.write(mv_code)
 	return
 
 if __name__ == "__main__":
