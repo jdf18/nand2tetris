@@ -10,7 +10,7 @@ def compile_file(filepath):
     return vm_code
 
 def save_VMCode(mv_code, filepath):
-	print(mv_code, filepath)
+	#print(mv_code, filepath)
 	with open(filepath, 'w') as file:
 		file.write(mv_code)
 	return
@@ -41,5 +41,5 @@ if __name__ == "__main__":
 		save_VMCode(vm_code, filepath[filepath.rindex('.'):]+'.vm')
 	else:
 		for file in [f for f in os.listdir(filepath) if (os.path.isfile(filepath + f) and f[f.rindex('.'):] == '.jack')]:
-			abstract_syntax_tree = compile_file(filepath + file)
-			save_VMCode(abstract_syntax_tree, filepath + file[:file.rindex('.')]+'.vm')
+			vm_code = compile_file(filepath + file)
+			save_VMCode(vm_code, filepath + file[:file.rindex('.')]+'.vm')

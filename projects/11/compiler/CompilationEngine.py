@@ -130,13 +130,19 @@ class CompilationEngine:
         self.xml += "<subroutineDec>\n"
 
         self.symbol_table.startSubroutine()
+        self.is_method = False
 
         # Check first symbol is CONSTRUCTOR | FUNCTION | METHOD
+        self.is_constructor = False
         assert type(self.tokens.current_token) == KeywordToken
         assert self.tokens.current_token.keyword in [Keywords.CONSTRUCTOR, Keywords.FUNCTION, Keywords.METHOD]
         self.xml += f"<keyword> {self.tokens.current_token.keyword.name.lower()} </keyword>\n"
         if self.tokens.current_token.keyword == Keywords.METHOD:
             self.symbol_table.define('this', self.classname, KIND.ARG)
+            self.is_method = True
+        elif self.tokens.current_token.keyword == Keywords.CONSTRUCTOR:
+            self.symbol_table.define('this', self.classname, KIND.VAR)
+            self.is_constructor = True
         self.tokens.advance()
         
         # Next is a type thingy again or VOID
@@ -229,6 +235,16 @@ class CompilationEngine:
                 break
 
         self.vm_code.write_function(self.subroutine_name, locals_count)
+        if self.is_constructor:
+            self.vm_code.write_push(
+                SEGMENT.CONST, 
+                self.symbol_table.var_count(KIND.FIELD)
+            )
+            self.vm_code.write_call("Memory.alloc", 1)
+            self.vm_code.write_pop(SEGMENT.POINTER, 0)
+        elif self.is_method:
+            self.vm_code.write_push(SEGMENT.ARG, 0)
+            self.vm_code.write_pop(SEGMENT.POINTER, 0)
         
         # Compile subroutine statements
         self.compileStatements()
@@ -384,10 +400,10 @@ class CompilationEngine:
         self.xml += "<symbol> ( </symbol>\n"
         self.tokens.advance()
 
-        top_label = self.get_new_label()
+        #top_label = self.get_new_label()
         neg_label = self.get_new_label()
 
-        self.vm_code.write_label(top_label)
+        #self.vm_code.write_label(top_label)
 
         self.compileExpression()
 
@@ -626,9 +642,8 @@ class CompilationEngine:
             elif self.tokens.current_token.keyword == Keywords.NULL:
                 self.vm_code.write_push(SEGMENT.CONST, 0)
             elif self.tokens.current_token.keyword == Keywords.THIS:
-                # TODO idk what to put here
-                # ? Pointer 0 ?
-                pass
+                print(self.subroutine_name)
+                self.vm_code.write_push(SEGMENT.POINTER, 0)
             self.tokens.advance()
 
         elif type(self.tokens.current_token) == IdentifierToken:
@@ -711,16 +726,22 @@ class CompilationEngine:
         assert type(self.tokens.current_token) == IdentifierToken
         self.xml += f"<identifier> {self.tokens.current_token.identifier} </identifier>\n"
         label = self.tokens.current_token.identifier
+        print(self.tokens.tokens[self.tokens.current_index-2: self.tokens.current_index + 3])
         self.tokens.advance()
 
         # Check for ( or .
+        n_args = 0
         assert type(self.tokens.current_token) == SymbolToken
         if self.tokens.current_token.symbol == Symbols.LEFT_BRACKET:
             # Check for (
             self.xml += "<symbol> ( </symbol>\n"
             self.tokens.advance()
 
-            self.compileExpressionList()
+            self.vm_code.write_push(SEGMENT.POINTER, 0)
+            label = self.classname + "." + label
+            n_args += 1
+
+            n_args += self.compileExpressionList()
 
             # Check for )
             assert type(self.tokens.current_token) == SymbolToken
@@ -731,6 +752,16 @@ class CompilationEngine:
             assert self.tokens.current_token.symbol == Symbols.PERIOD
             self.xml += "<symbol> . </symbol>\n"
             self.tokens.advance()
+
+            # label is currently name of instance of the class.
+            name = label
+            if self.symbol_table.exists(name):
+                label = self.symbol_table.type_of(name)
+                self.vm_code.write_push(
+                    self.symbol_table.kind_of(name).value,
+                    self.symbol_table.index_of(name)
+                )
+                n_args += 1
 
             assert type(self.tokens.current_token) == IdentifierToken
             self.xml += f"<identifier> {self.tokens.current_token.identifier} </identifier>\n"
@@ -743,7 +774,7 @@ class CompilationEngine:
             self.xml += "<symbol> ( </symbol>\n"
             self.tokens.advance()
 
-            n_args = self.compileExpressionList()
+            n_args += self.compileExpressionList()
 
             # Check for )
             assert type(self.tokens.current_token) == SymbolToken
@@ -751,6 +782,7 @@ class CompilationEngine:
             self.xml += "<symbol> ) </symbol>\n"
             self.tokens.advance()
 
+        print("label written:", label)
         self.vm_code.write_call(label, n_args)
 
         #self.xml += '</subroutineCall>\n'

@@ -69,3 +69,6 @@ class SymbolTable:
         if name in self.subroutine_symbol_table.keys():
             return self.subroutine_symbol_table[name][2]
         return self.class_symbol_table[name][2]
+    def exists(self, name: str) -> bool:
+        return (name in self.subroutine_symbol_table.keys()) \
+            or (name in self.class_symbol_table.keys())
