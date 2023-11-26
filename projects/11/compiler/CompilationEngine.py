@@ -352,12 +352,21 @@ class CompilationEngine:
         self.tokens.advance()
 
         # ( '[' expression ']' )?
+        array_magic = False
         assert type(self.tokens.current_token) == SymbolToken
         if self.tokens.current_token.symbol == Symbols.LEFT_HARD_BRACKET:
+            array_magic = True
             self.xml += "<symbol> [ </symbol>\n"
             self.tokens.advance()
 
+            self.vm_code.write_push(
+                self.symbol_table.kind_of(store_token).value,
+                self.symbol_table.index_of(store_token)
+            )
+
             self.compileExpression()
+
+            self.vm_code.write_arithmetic(COMMAND.ADD)
 
             assert type(self.tokens.current_token) == SymbolToken
             assert self.tokens.current_token.symbol == Symbols.RIGHT_HARD_BRACKET
@@ -374,10 +383,17 @@ class CompilationEngine:
         assert type(self.tokens.current_token) == SymbolToken
         assert self.tokens.current_token.symbol == Symbols.SEMICOLON
         self.xml += "<symbol> ; </symbol>\n"
-        self.vm_code.write_pop(
-            self.symbol_table.kind_of(store_token).value,
-            self.symbol_table.index_of(store_token)
-        )
+
+        if array_magic:
+            self.vm_code.write_pop(SEGMENT.TEMP, 1)
+            self.vm_code.write_pop(SEGMENT.POINTER, 1)
+            self.vm_code.write_push(SEGMENT.TEMP, 1)
+            self.vm_code.write_pop(SEGMENT.THAT, 0)
+        else:
+            self.vm_code.write_pop(
+                self.symbol_table.kind_of(store_token).value,
+                self.symbol_table.index_of(store_token)
+            )
         self.tokens.advance()
 
         self.xml += '</letStatement>\n'
@@ -629,6 +645,7 @@ class CompilationEngine:
             self.xml += f"<stringConstant> {str(self.tokens.current_token.stringValue)} </stringConstant>\n"
             # TODO Creates new string object with length
             # TODO Adds each character
+            self.compileString(self.tokens.current_token.stringValue)
             self.tokens.advance()
 
         elif type(self.tokens.current_token) == KeywordToken:
@@ -656,6 +673,10 @@ class CompilationEngine:
                 if self.tokens.look_ahead().symbol == Symbols.LEFT_HARD_BRACKET:
                     # varName '[' expression ']':   identifier then symbol '[' then ...
                     self.xml += f"<identifier> {self.tokens.current_token.identifier} </identifier>\n"
+                    self.vm_code.write_push(
+                        self.symbol_table.kind_of(self.tokens.current_token.identifier).value,
+                        self.symbol_table.index_of(self.tokens.current_token.identifier)
+                    )
                     self.tokens.advance()
 
                     self.xml += "<symbol> [ </symbol>\n"
@@ -663,10 +684,13 @@ class CompilationEngine:
 
                     self.compileExpression()
 
+                    self.vm_code.write_arithmetic(COMMAND.ADD)
+                    self.vm_code.write_pop(SEGMENT.POINTER, 1)
+                    self.vm_code.write_push(SEGMENT.THAT, 0)
+
                     assert type(self.tokens.current_token) == SymbolToken
                     assert self.tokens.current_token.symbol == Symbols.RIGHT_HARD_BRACKET
                     self.xml += "<symbol> ] </symbol>\n"
-                    # TODO push the result onto the stack
                     self.tokens.advance()
 
                 elif self.tokens.look_ahead().symbol in [Symbols.LEFT_BRACKET, Symbols.PERIOD]:
@@ -841,3 +865,11 @@ class CompilationEngine:
         self.xml += '</expressionList>\n'
         # return number of arguments
         return count
+
+    def compileString(self, string: str):
+        # TODO String create and push to stack
+        self.vm_code.write_push(SEGMENT.CONST, len(string))
+        self.vm_code.write_call("String.new", 1)
+        for char in string:
+            self.vm_code.write_push(SEGMENT.CONST, ord(char))
+            self.vm_code.write_call("String.appendChar", 2)
