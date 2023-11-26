@@ -689,12 +689,18 @@ class CompilationEngine:
             else:
                 assert self.tokens.current_token.symbol in [Symbols.MINUS, Symbols.TILDA]
 
+                operation = self.tokens.current_token.symbol
                 self.xml += f"<symbol> {SymbolsLUT[self.tokens.current_token.symbol]} </symbol>\n"
                 self.tokens.advance()
 
                 # TODO Push token then do operation
 
                 self.compileTerm()
+
+                if operation == Symbols.MINUS:
+                    self.vm_code.write_arithmetic(COMMAND.NEG)
+                elif operation == Symbols.TILDA:
+                    self.vm_code.write_arithmetic(COMMAND.NOT)
 
         self.xml += '</term>\n'
         return
