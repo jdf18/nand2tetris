@@ -1,34 +1,52 @@
 // This file is part of www.nand2tetris.org
 // and the book "The Elements of Computing Systems"
 // by Nisan and Schocken, MIT Press.
-// File name: projects/12/MathTest/Main.jack
+// File name: projects/12/MemoryTest/Main.jack
 
-/** Test program for the OS Math class. */
+/** Test program for the OS Memory class. */
 class Main {
 
-    /** Performs various mathematical operations, using calls to the Math class methods. */
+    /** Performs various memory manipulations. */
     function void main() {
-        var Array r;          // stores the test results;
+        var int temp, err;
+        var Array a, b, c;
         
-        let r = 8000;
-    
-        let r[0] = 2 * 3;                  // 6
-        let r[1] = r[0] * (-30);           // 6 * (-30) = -180
-        let r[2] = r[1] * 100;             // (-180) * 100 = -18000
-        let r[3] = 1 * r[2];               // 1 * (-18000) = -18000
-        let r[4] = r[3] * 0;               // 0
+        do Memory.poke(8000, 333);       // RAM[8000] = 333
+        let temp = Memory.peek(8000);
+        do Memory.poke(8001, temp + 1);  // RAM[8001] = 334
         
-        let r[5] = 9 / 3;                  // 3
-        let r[6] = (-18000) / 6;           // -3000
-        let r[7] = 32766 / (-32767);       // 0
+        let a = Array.new(3);            // uses Memory.alloc
+        let a[2] = 222;
+        do Memory.poke(8002, a[2]);      // RAM[8002] = 222
         
-        let r[8] = Math.sqrt(9);           // 3
-        let r[9] = Math.sqrt(32767);       // 181
+		let err = 0;
+        let b = Array.new(3);
+        let b[1] = a[2] - 100;
+		if (b = a) {					  // Fail compare if b = a
+			let err = 1; }
+        do Memory.poke(8003, b[1] + err); // RAM[8003] = 122
         
-        let r[10] = Math.min(345, 123);    // 123
-        let r[11] = Math.max(123, -345);   // 123
-        let r[12] = Math.abs(27);          // 27
-        let r[13] = Math.abs(-32767);      // 32767
+		let err = 0;
+        let c = Array.new(500);
+        let c[499] = a[2] - b[1];
+		if (c = a) {					  // Fail compare if c = a
+			let err = 1; }
+		if (c = b) {					  // Fail compare if c = b
+			let err = err + 10; }
+        do Memory.poke(8004, c[499]+err); // RAM[8004] = 100
+        
+        do a.dispose();                   // uses Memory.deAlloc
+        do b.dispose();
+        
+		let err = 0;
+        let b = Array.new(3);
+        let b[0] = c[499] - 90;
+		if (b = c) {					  // Fail compare if b = c
+			let err = 1; }
+        do Memory.poke(8005, b[0] + err); // RAM[8005] = 10
+        
+        do c.dispose();
+        do b.dispose();
         
         return;
     }
