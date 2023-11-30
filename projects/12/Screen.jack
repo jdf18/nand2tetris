@@ -59,7 +59,7 @@ class Screen {
             let bit = bit - 1;
         }
 
-        let address = Screen.getAddress(x, y);
+        let address = SCREEN + (32 * y) + (x / 16);
         let bit = Memory.peek(address);
 
         if (COLOR = true) {
@@ -138,6 +138,7 @@ class Screen {
     /** Draws a filled rectangle whose top left corner is (x1, y1)
      * and bottom right corner is (x2,y2), using the current color. */
     function void drawRectangle(int x1, int y1, int x2, int y2) {
+        var int init;
         if (x1 > x2) {
             let x1 = x1 + x2;
             let x2 = x1 - x2;
@@ -155,7 +156,9 @@ class Screen {
             do Sys.error(7);
         }
 
+        let init = x1;
         while (~(y1 > y2)) {
+            let x1 = init;
             while (~(x1 > x2)) {
                 do Screen.drawPixel(x1, y1);
                 let x1 = x1 + 1;
@@ -184,8 +187,8 @@ class Screen {
 
         let t = 0;
         while (t < r) {
-            do Screen.drawPixel(y, x - t);
-            do Screen.drawPixel(y, x + t);
+            do Screen.drawPixel(x - t, y);
+            do Screen.drawPixel(x + t, y);
             let t = t + 1;
         }
 
@@ -194,10 +197,10 @@ class Screen {
             let len = Math.sqrt( (r * r) - (dy * dy));
             let t = 0;
             while (t < len) {
-                do Screen.drawPixel(y + dy, x - t);
-                do Screen.drawPixel(y + dy, x + t);
-                do Screen.drawPixel(y - dy, x - t);
-                do Screen.drawPixel(y - dy, x + t);
+                do Screen.drawPixel(x - t, y + dy);
+                do Screen.drawPixel(x + t, y + dy);
+                do Screen.drawPixel(x - t, y - dy);
+                do Screen.drawPixel(x + t, y - dy);
                 let t = t + 1;
             }
             let dy = dy + 1;
