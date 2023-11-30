@@ -47,6 +47,8 @@ class Math {
         if (x = 0 | y = 0) {
             return 0;
         }
+
+        let negative = false;
         if ( (x < 0 & y > 0) | (x > 0 & y < 0) ) {
             let negative = true;
         }
@@ -57,12 +59,11 @@ class Math {
             let y = -y;
         }
         
-        let negative = false;
         let n = 0;
         let result = 0;
 
         while (n < 16) {
-            if ((y & n) = true) {
+            if (~((y & powersOfTwo[n]) = 0)) {
                 let result = result + x;
             }
             let x = x + x;
@@ -102,7 +103,7 @@ class Math {
             }
         }
 
-        if (y < x) {
+        if (y > x) {
             return 0;
         }
 
