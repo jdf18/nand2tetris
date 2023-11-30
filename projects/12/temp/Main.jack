@@ -1,35 +1,41 @@
 // This file is part of www.nand2tetris.org
 // and the book "The Elements of Computing Systems"
 // by Nisan and Schocken, MIT Press.
-// File name: projects/12/ScreenTest/Main.jack
+// File name: projects/12/OutputTest/Main.jack
 
-/** Test program for the OS Screen class. */
+/** Test program for the OS Output class. */
 class Main {
 
-    /** Draws a sample pictue on the screen using lines and circles. */
+    /** Outputs the entire character set to the screen using all the
+     *  methods of the Output class. */
     function void main() {
+        var String s;
     
-        do Screen.drawLine(0,220,511,220);        // base line
-        do Screen.drawRectangle(280,90,410,220);  // house
+    	let s = String.new(1);
+    	do s.appendChar(String.doubleQuote());
+    
+        do Output.moveCursor(0, 63);
+        do Output.printChar(66);
+        do Output.moveCursor(22, 0);
+        do Output.printChar(67);
+        do Output.moveCursor(22, 63);
+        do Output.printChar(68);
+        do Output.printChar(65);
         
-        do Screen.setColor(false); 
-        do Screen.drawRectangle(350,120,390,219); // door
-        do Screen.drawRectangle(292,120,332,150); // window
+        do Output.moveCursor(2, 0);
+        do Output.printString("0123456789");
+        do Output.println();
         
-        do Screen.setColor(true); 
-        do Screen.drawCircle(360,170,3);          // door handle
-        do Screen.drawLine(280,90,345,35);        // roof
-        do Screen.drawLine(345,35,410,90);        // roof
-
-        do Screen.drawCircle(140,60,30);          // sun
-        do Screen.drawLine(140,26, 140, 6);       
-        do Screen.drawLine(163,35,178,20);       
-        do Screen.drawLine(174,60,194,60);       
-        do Screen.drawLine(163,85,178,100);       
-        do Screen.drawLine(140,94,140,114);       
-        do Screen.drawLine(117,85,102,100);       
-        do Screen.drawLine(106,60,86,60);       
-        do Screen.drawLine(117,35,102,20);       
+        do Output.printString("ABCDEFGHIJKLMNOPQRSTUVWXYZ abcdefghijklmnopqrstuvwxyz");
+        do Output.println();
+        
+        do Output.printString("!#$%&'()*+,-./:;<=>?@[\]^_`{|}~");
+        do Output.printString(s);
+        do Output.println();
+        
+        do Output.printInt(-12345);
+        do Output.backSpace();
+        do Output.printInt(6789);
         
         return;
     }
